@@ -1,4 +1,4 @@
-package mech.mania.engine.player;
+package mech.mania.engine.character;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

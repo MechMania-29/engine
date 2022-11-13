@@ -1,4 +1,4 @@
-package mech.mania.engine.player;
+package mech.mania.engine.character;
 
 public class Position {
     private int x;

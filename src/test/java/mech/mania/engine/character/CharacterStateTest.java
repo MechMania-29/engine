@@ -1,12 +1,12 @@
-package mech.mania.engine.player;
+package mech.mania.engine.character;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class PlayerStateTest {
+public class CharacterStateTest {
     @Test
     public void BaseTest() {
-        PlayerState state = new PlayerState(0, new Position(1, 2), false);
+        CharacterState state = new CharacterState(0, new Position(1, 2), false);
 
         Assertions.assertEquals(state.getId(), 0);
         Assertions.assertEquals(state.getPosition(), new Position(1, 2));

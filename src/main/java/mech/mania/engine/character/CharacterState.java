@@ -1,12 +1,12 @@
-package mech.mania.engine.player;
+package mech.mania.engine.character;
 
-// A current state of a player. Basically a player at a certain point in time.
-public class PlayerState implements Cloneable {
+// A current state of a character. Basically a character at a certain point in time.
+public class CharacterState implements Cloneable {
     private int id;
     private Position position;
     private boolean isZombie = false;
 
-    public PlayerState(int id, Position position, boolean isZombie) {
+    public CharacterState(int id, Position position, boolean isZombie) {
         this.id = id;
         this.position = position;
         this.isZombie = isZombie;
@@ -33,8 +33,8 @@ public class PlayerState implements Cloneable {
     }
 
     @Override
-    public PlayerState clone() {
-        return new PlayerState(id, position, isZombie);
+    public CharacterState clone() {
+        return new CharacterState(id, position, isZombie);
     }
 }
 

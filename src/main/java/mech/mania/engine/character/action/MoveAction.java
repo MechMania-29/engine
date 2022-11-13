@@ -1,12 +1,12 @@
-package mech.mania.engine.player.action;
+package mech.mania.engine.character.action;
 
-import mech.mania.engine.player.Position;
+import mech.mania.engine.character.Position;
 
 public class MoveAction extends Action {
     private Position destination;
 
-    public MoveAction(int executingPlayerId, Position destination) {
-        super(executingPlayerId);
+    public MoveAction(int executingCharacterId, Position destination) {
+        super(executingCharacterId);
 
         this.destination = destination;
     }
