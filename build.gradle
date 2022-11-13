@@ -7,7 +7,7 @@ group 'mech.mania'
 version '1.0-SNAPSHOT'
 
 application {
-    mainClassName = 'mech.mania.engine.Main'
+    mainClassName = 'mech.mania.engine.Engine'
 }
 
 repositories {
