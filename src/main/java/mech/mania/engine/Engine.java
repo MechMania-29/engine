@@ -1,6 +1,6 @@
 package mech.mania.engine;
 
-public class Main {
+public class Engine {
     public static void main(String[] args) {
         System.out.println("Hello world! Yay!");
     }
