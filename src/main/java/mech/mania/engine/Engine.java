@@ -1,9 +1,19 @@
 package mech.mania.engine;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import mech.mania.engine.character.CharacterState;
 import mech.mania.engine.character.Position;
 import mech.mania.engine.character.action.MoveAction;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -13,25 +23,84 @@ import static mech.mania.engine.Config.TURNS;
 
 public class Engine {
     public static void main(String[] args) {
+        class T {
+            @JsonProperty("flag") @JsonInclude(JsonInclude.Include.NON_NULL)
+            private Boolean flag;
+            @JsonProperty("id")
+            private int id;
+
+            public T(Boolean flag, int id) {
+                this.flag = flag;
+                this.id = id;
+            }
+
+            public Boolean getFlag() {
+                return flag;
+            }
+
+            public void setFlag(Boolean flag) {
+                this.flag = flag;
+            }
+        }
+
+        T t = new T(null, 1);
+        T t2 = new T(true, 2);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            System.out.println(objectMapper.writeValueAsString(t));
+            System.out.println(objectMapper.writeValueAsString(t2));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
         Random rand = new Random();
 
         GameState gameState = new GameState();
 
         System.out.println(gameState);
 
-        for (int i = 0; i < TURNS; i++) {
+        while (gameState.getTurn() < TURNS) {
             List<CharacterState> currentCharacterStates = gameState.getCharacterStates();
 
-            MoveAction[] moveActions = new MoveAction[TOTAL_CHARACTERS];
+            ArrayList<MoveAction> moveActions = new ArrayList<>();
             for (int j = 0; j < TOTAL_CHARACTERS; j++) {
-                Position currentPosition = currentCharacterStates.get(j).getPosition();
-                int destX = currentPosition.getX() + rand.nextInt(-1, 1 + 1);
-                int destY = currentPosition.getY() + rand.nextInt(-1, 1 + 1);
-                moveActions[j] = new MoveAction(j, new Position(destX, destY));
+                if (rand.nextInt(5) == 0) {
+                    Position currentPosition = currentCharacterStates.get(j).getPosition();
+                    int destX = currentPosition.getX() + rand.nextInt(-1, 1 + 1);
+                    int destY = currentPosition.getY() + rand.nextInt(-1, 1 + 1);
+                    moveActions.add(new MoveAction(j, new Position(destX, destY)));
+                }
             }
 
-            gameState.runTurn(Arrays.asList(moveActions));
+            gameState.runTurn(moveActions);
             System.out.println(gameState);
+        }
+
+        System.out.println(gameState.getLog());
+
+        String output = System.getProperty("output") == null ?
+                "gamelogs/game_" + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()) + ".json" :
+                System.getProperty("output");
+
+
+        File file = new File(output);
+        try {
+            file.getParentFile().mkdirs();
+        } catch (NullPointerException e) {
+            throw new RuntimeException(e);
+        }
+
+        PrintWriter printWriter = null;
+        try {
+            printWriter = new PrintWriter(file);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            printWriter.println(gameState.getLog());
+        } finally {
+            printWriter.close();
         }
     }
 }

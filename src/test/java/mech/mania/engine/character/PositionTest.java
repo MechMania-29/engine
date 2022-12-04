@@ -16,5 +16,10 @@ public class PositionTest {
 
         Assertions.assertEquals(pos.getX(), 5);
         Assertions.assertEquals(pos.getY(), 3);
+
+        Position pos2 = pos.clone();
+        pos2.setX(3);
+
+        Assertions.assertNotEquals(pos.getX(), pos2.getX());
     }
 }

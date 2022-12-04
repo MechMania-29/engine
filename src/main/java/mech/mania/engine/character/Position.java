@@ -1,9 +1,13 @@
 package mech.mania.engine.character;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import static mech.mania.engine.Config.BOARD_SIZE;
 
-public class Position {
+public class Position implements Cloneable {
+    @JsonProperty("x")
     private int x;
+    @JsonProperty("y")
     private int y;
 
     public Position(int x, int y) {
@@ -47,5 +51,14 @@ public class Position {
     @Override
     public String toString() {
         return "(" + x + ", " + y + ")";
+    }
+
+    @Override
+    public Position clone() {
+        try {
+            return (Position) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
