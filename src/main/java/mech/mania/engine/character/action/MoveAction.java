@@ -3,7 +3,7 @@ package mech.mania.engine.character.action;
 import mech.mania.engine.character.Position;
 
 public class MoveAction extends Action {
-    private Position destination;
+    private final Position destination;
 
     public MoveAction(int executingCharacterId, Position destination) {
         super(executingCharacterId);

@@ -1,5 +1,7 @@
 package mech.mania.engine.character;
 
+import static mech.mania.engine.Config.BOARD_SIZE;
+
 public class Position {
     private int x;
     private int y;
@@ -25,9 +27,8 @@ public class Position {
         this.y = y;
     }
 
-    public void translate(Position destination) {
-        setX(destination.getX());
-        setY(destination.getY());
+    public boolean inBounds() {
+        return this.x >= 0 && this.y >= 0 && this.x < BOARD_SIZE && this.y < BOARD_SIZE;
     }
 
     @Override
