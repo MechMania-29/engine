@@ -15,5 +15,9 @@ public class CharacterStateTest {
         state.makeZombie();
 
         Assertions.assertTrue(state.isZombie());
+
+        CharacterState cloned = state.clone();
+        state.setPosition(new Position(2, 4));
+        Assertions.assertNotEquals(cloned.getPosition(), state.getPosition());
     }
 }

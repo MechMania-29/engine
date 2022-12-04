@@ -34,7 +34,11 @@ public class CharacterState implements Cloneable {
 
     @Override
     public CharacterState clone() {
-        return new CharacterState(id, position, isZombie);
+        try {
+            return (CharacterState) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 

@@ -18,13 +18,10 @@ public class GameState implements Cloneable {
 
     @Override
     public GameState clone() {
-        GameState newGameState = new GameState();
-        List<CharacterState> newCharacterStates = newGameState.getCharacterStates();
-
-        for (int i = 0; i < newCharacterStates.size(); i++) {
-            newCharacterStates.set(i, characterStates.get(i).clone());
+        try {
+            return (GameState) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
         }
-
-        return newGameState;
     }
 }
