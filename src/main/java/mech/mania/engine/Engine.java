@@ -48,7 +48,7 @@ public class Engine {
         System.out.println(gameState.getLog());
 
         String output = System.getProperty("output") == null ?
-                "gamelogs/game_" + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()) + ".json" :
+                "gamelogs/game_" + DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss").format(LocalDateTime.now()) + ".json" :
                 System.getProperty("output");
 
 
