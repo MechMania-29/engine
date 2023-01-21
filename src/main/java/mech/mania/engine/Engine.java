@@ -14,7 +14,6 @@ import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -23,37 +22,6 @@ import static mech.mania.engine.Config.TURNS;
 
 public class Engine {
     public static void main(String[] args) {
-        class T {
-            @JsonProperty("flag") @JsonInclude(JsonInclude.Include.NON_NULL)
-            private Boolean flag;
-            @JsonProperty("id")
-            private int id;
-
-            public T(Boolean flag, int id) {
-                this.flag = flag;
-                this.id = id;
-            }
-
-            public Boolean getFlag() {
-                return flag;
-            }
-
-            public void setFlag(Boolean flag) {
-                this.flag = flag;
-            }
-        }
-
-        T t = new T(null, 1);
-        T t2 = new T(true, 2);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            System.out.println(objectMapper.writeValueAsString(t));
-            System.out.println(objectMapper.writeValueAsString(t2));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
         Random rand = new Random();
 
         GameState gameState = new GameState();
