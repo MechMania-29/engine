@@ -1,9 +1,5 @@
 package mech.mania.engine;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import mech.mania.engine.character.CharacterState;
 import mech.mania.engine.character.Position;
 import mech.mania.engine.character.action.MoveAction;
@@ -15,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static mech.mania.engine.Config.TOTAL_CHARACTERS;
@@ -29,15 +26,16 @@ public class Engine {
         System.out.println(gameState);
 
         while (gameState.getTurn() < TURNS) {
-            List<CharacterState> currentCharacterStates = gameState.getCharacterStates();
+            Map<String, CharacterState> currentCharacterStates = gameState.getCharacterStates();
 
             ArrayList<MoveAction> moveActions = new ArrayList<>();
             for (int j = 0; j < TOTAL_CHARACTERS; j++) {
+                String id = Integer.toString(j);
                 if (rand.nextInt(5) == 0) {
-                    Position currentPosition = currentCharacterStates.get(j).getPosition();
+                    Position currentPosition = currentCharacterStates.get(id).getPosition();
                     int destX = currentPosition.getX() + rand.nextInt(-1, 1 + 1);
                     int destY = currentPosition.getY() + rand.nextInt(-1, 1 + 1);
-                    moveActions.add(new MoveAction(j, new Position(destX, destY)));
+                    moveActions.add(new MoveAction(id, new Position(destX, destY)));
                 }
             }
 

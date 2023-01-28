@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import mech.mania.engine.character.CharacterState;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static mech.mania.engine.Config.TOTAL_CHARACTERS;
 
@@ -12,18 +14,14 @@ public class LogTurnState {
     @JsonProperty("turn")
     private int turn;
     @JsonProperty("characters")
-    private List<CharacterState> modifiedCharacterStates;
+    private Map<String, CharacterState> modifiedCharacterStates;
 
     public LogTurnState(int turn) {
         this.turn = turn;
-        this.modifiedCharacterStates = Arrays.asList(new CharacterState[TOTAL_CHARACTERS]);
-
-        for (int i = 0; i < TOTAL_CHARACTERS; i++) {
-            modifiedCharacterStates.set(i, null);
-        }
+        this.modifiedCharacterStates = new HashMap<>();
     }
 
-    public List<CharacterState> getModifiedCharacterStates() {
+    public Map<String, CharacterState> getModifiedCharacterStates() {
         return modifiedCharacterStates;
     }
 }

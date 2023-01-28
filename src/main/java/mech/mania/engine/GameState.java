@@ -7,22 +7,25 @@ import mech.mania.engine.log.Log;
 import mech.mania.engine.log.LogSetupState;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static mech.mania.engine.Config.*;
 
 public class GameState implements Cloneable {
     private Log log;
     private int turn;
-    private final List<CharacterState> characterStates;
+    private final Map<String, CharacterState> characterStates;
 
     public GameState() {
         log = new Log(new LogSetupState());
         turn = 0;
-        characterStates = Arrays.asList(new CharacterState[TOTAL_CHARACTERS]);
-        List<CharacterState> modifiedCharacterStates = log.getTurnStates().get(turn).getModifiedCharacterStates();
+        characterStates = new HashMap<>();
+        Map<String, CharacterState> modifiedCharacterStates = log.getTurnStates().get(turn).getModifiedCharacterStates();
 
         for (int i = 0; i < TOTAL_CHARACTERS; i++) {
+            String id = Integer.toString(i);
             boolean isZombie = i < STARTING_ZOMBIES;
             Position startingPosition;
 
@@ -32,13 +35,13 @@ public class GameState implements Cloneable {
                 startingPosition = new Position(BOARD_SIZE / 2 + i, BOARD_SIZE - 1);
             }
 
-            CharacterState characterState = new CharacterState(i, startingPosition, isZombie);
-            characterStates.set(i, characterState);
-            modifiedCharacterStates.set(i, characterState.clone());
+            CharacterState characterState = new CharacterState(id, startingPosition, isZombie);
+            characterStates.put(id, characterState);
+            modifiedCharacterStates.put(id, characterState.clone());
         }
     };
 
-    public List<CharacterState> getCharacterStates() {
+    public Map<String, CharacterState> getCharacterStates() {
         return characterStates;
     }
 
@@ -52,11 +55,11 @@ public class GameState implements Cloneable {
 
     public void runTurn(List<MoveAction> moveActions) {
         turn++;
-        List<CharacterState> modifiedCharacterStates = log.getTurnStates().get(turn).getModifiedCharacterStates();
+        Map<String, CharacterState> modifiedCharacterStates = log.getTurnStates().get(turn).getModifiedCharacterStates();
         for (MoveAction moveAction : moveActions) {
-            int id = moveAction.getExecutingCharacterId();
+            String id = moveAction.getExecutingCharacterId();
 
-            if (id < 0 || id >= TOTAL_CHARACTERS) {
+            if (!characterStates.containsKey(id)) {
                 continue;
             }
 
@@ -71,7 +74,7 @@ public class GameState implements Cloneable {
 
             CharacterState existing = modifiedCharacterStates.get(id);
             if (existing == null) {
-                modifiedCharacterStates.set(id, new CharacterState(id, destination.clone(), null));
+                modifiedCharacterStates.put(id, new CharacterState(id, destination.clone(), null));
             } else {
                 existing.setPosition(destination.clone());
             }
@@ -88,7 +91,7 @@ public class GameState implements Cloneable {
             Arrays.fill(row, '-');
         }
 
-        for (CharacterState characterState : characterStates) {
+        for (CharacterState characterState : characterStates.values()) {
             Position position = characterState.getPosition();
             board[position.getY()][position.getX()] =
                     (characterState.isZombie()) ? 'Z' : 'H';

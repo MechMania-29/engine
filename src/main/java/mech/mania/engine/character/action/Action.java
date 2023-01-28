@@ -2,14 +2,14 @@ package mech.mania.engine.character.action;
 
 // The base action class
 public class Action {
-    private int executingCharacterId; // The id of the character executing this action
+    private String executingCharacterId; // The id of the character executing this action
     private boolean isValid = true; // Whether this action is valid
 
-    public Action(int executingCharacterId) {
+    public Action(String executingCharacterId) {
         this.executingCharacterId = executingCharacterId;
     }
 
-    public int getExecutingCharacterId() {
+    public String getExecutingCharacterId() {
         return executingCharacterId;
     }
 
