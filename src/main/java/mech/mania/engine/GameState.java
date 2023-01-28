@@ -1,5 +1,6 @@
 package mech.mania.engine;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import mech.mania.engine.character.CharacterState;
 import mech.mania.engine.character.Position;
 import mech.mania.engine.character.action.MoveAction;
@@ -25,7 +26,7 @@ public class GameState implements Cloneable {
         log = new Log(new LogSetupState());
         turn = 0;
         characterStates = new HashMap<>();
-        Map<String, CharacterState> modifiedCharacterStates = log.getTurnStates().get(turn).getModifiedCharacterStates();
+        Map<String, Map<String, JsonNode>> diffs = new HashMap<>();
 
         for (int i = 0; i < TOTAL_CHARACTERS; i++) {
             String id = Integer.toString(i);
@@ -40,8 +41,12 @@ public class GameState implements Cloneable {
 
             CharacterState characterState = new CharacterState(id, startingPosition, isZombie);
             characterStates.put(id, characterState);
-            modifiedCharacterStates.put(id, characterState.clone());
+
+            Map<String, JsonNode> diff = characterState.diff(null);
+            diffs.put(id, diff);
         }
+
+        log.storeCharacterStateDiffs(diffs);
 
         humanPlayer = new Player(-1, true, false);
         zombiePlayer = new Player(-1, true, true);
@@ -60,11 +65,19 @@ public class GameState implements Cloneable {
     }
 
     public void runTurn() {
+        // Increment turn
         turn++;
 
+        // Store character states for latter
+        Map<String, CharacterState> previousCharacterStates = new HashMap<>();
+        for (CharacterState characterState : characterStates.values()) {
+            previousCharacterStates.put(characterState.getId(), characterState.clone());
+        }
+
+        // Get player input
         List<MoveAction> moveActions = (turn % 2 == 1) ? zombiePlayer.getInput(this) : humanPlayer.getInput(this);
 
-        Map<String, CharacterState> modifiedCharacterStates = log.getTurnStates().get(turn).getModifiedCharacterStates();
+        // Apply move actions
         for (MoveAction moveAction : moveActions) {
             String id = moveAction.getExecutingCharacterId();
 
@@ -80,14 +93,25 @@ public class GameState implements Cloneable {
             // TODO: Distance check
 
             characterStates.get(id).setPosition(destination);
-
-            CharacterState existing = modifiedCharacterStates.get(id);
-            if (existing == null) {
-                modifiedCharacterStates.put(id, new CharacterState(id, destination.clone(), null));
-            } else {
-                existing.setPosition(destination.clone());
-            }
         }
+
+        // Store diffs
+        Map<String, Map<String, JsonNode>> diffs = new HashMap<>();
+
+        for (String id : characterStates.keySet()) {
+            CharacterState previous = previousCharacterStates.get(id);
+            CharacterState current = characterStates.get(id);
+
+            Map<String, JsonNode> diff = current.diff(previous);
+
+            if (diff == null) {
+                continue;
+            }
+
+            diffs.put(id, diff);
+        }
+
+        log.storeCharacterStateDiffs(diffs);
     }
 
     @Override

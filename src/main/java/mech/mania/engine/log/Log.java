@@ -1,17 +1,14 @@
 package mech.mania.engine.log;
 
-import static mech.mania.engine.Config.TURNS;
-
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Log {
     @JsonProperty("setup")
@@ -21,15 +18,14 @@ public class Log {
 
     public Log(LogSetupState setupState) {
         this.setupState = setupState;
-        this.turnStates = Arrays.asList(new LogTurnState[TURNS + 1]);
-
-        for (int i = 0; i < TURNS + 1; i++) {
-            turnStates.set(i, new LogTurnState(i));
-        }
+        this.turnStates = new ArrayList<>();
     }
 
-    public List<LogTurnState> getTurnStates() {
-        return turnStates;
+    public void storeCharacterStateDiffs(Map<String, Map<String, JsonNode>> characterStateDiffs) {
+        int turn = turnStates.size();
+        LogTurnState turnState = new LogTurnState(turn, characterStateDiffs);
+
+        turnStates.add(turnState);
     }
 
     @Override

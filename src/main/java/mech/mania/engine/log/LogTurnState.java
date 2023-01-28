@@ -1,27 +1,19 @@
 package mech.mania.engine.log;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import mech.mania.engine.character.CharacterState;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import static mech.mania.engine.Config.TOTAL_CHARACTERS;
 
 public class LogTurnState {
     @JsonProperty("turn")
     private int turn;
     @JsonProperty("characters")
-    private Map<String, CharacterState> modifiedCharacterStates;
+    private Map<String, Map<String, JsonNode>> characterStateDiffs;
 
-    public LogTurnState(int turn) {
+    public LogTurnState(int turn, Map<String, Map<String, JsonNode>> characterStateDiffs) {
         this.turn = turn;
-        this.modifiedCharacterStates = new HashMap<>();
-    }
-
-    public Map<String, CharacterState> getModifiedCharacterStates() {
-        return modifiedCharacterStates;
+        this.characterStateDiffs = characterStateDiffs;
     }
 }
