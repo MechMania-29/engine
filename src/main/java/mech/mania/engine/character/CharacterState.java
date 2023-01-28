@@ -1,20 +1,19 @@
 package mech.mania.engine.character;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import mech.mania.engine.log.NullBooleanFilter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import mech.mania.engine.Diffable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 // A current state of a character. Basically a character at a certain point in time.
-public class CharacterState implements Cloneable {
-    @JsonIgnore
+public class CharacterState implements Cloneable, Diffable {
     private final String id;
-    @JsonProperty("position") @JsonInclude(JsonInclude.Include.NON_NULL)
     private Position position;
-    @JsonProperty("isZombie") @JsonInclude(value = JsonInclude.Include.CUSTOM, valueFilter = NullBooleanFilter.class)
-    private Boolean isZombie;
+    private boolean isZombie;
 
-    public CharacterState(String id, Position position, Boolean isZombie) {
+    public CharacterState(String id, Position position, boolean isZombie) {
         this.id = id;
         this.position = position;
         this.isZombie = isZombie;
@@ -28,8 +27,7 @@ public class CharacterState implements Cloneable {
         return position;
     }
 
-    @JsonIgnore
-    public Boolean isZombie() {
+    public boolean isZombie() {
         return isZombie;
     }
 
@@ -48,6 +46,43 @@ public class CharacterState implements Cloneable {
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public Map<String, JsonNode> diff(Object previous) {
+        if (this == previous) {
+            return null;
+        }
+        CharacterState previousCharacterState = null;
+
+        if (previous != null) {
+            if (!(previous instanceof CharacterState cs)) {
+                return null;
+            }
+
+            previousCharacterState = cs;
+
+            if (!previousCharacterState.id.equals(id)) {
+                return null;
+            }
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        HashMap<String, JsonNode> diff = new HashMap<>();
+
+        if (previousCharacterState == null || position != previousCharacterState.position) {
+            diff.put("position", mapper.valueToTree(position));
+        }
+
+        if (previousCharacterState == null || isZombie != previousCharacterState.isZombie) {
+            diff.put("isZombie", mapper.valueToTree(isZombie));
+        }
+
+        if (diff.isEmpty()) {
+            return null;
+        }
+
+        return diff;
     }
 }
 

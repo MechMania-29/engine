@@ -26,20 +26,7 @@ public class Engine {
         System.out.println(gameState);
 
         while (gameState.getTurn() < TURNS) {
-            Map<String, CharacterState> currentCharacterStates = gameState.getCharacterStates();
-
-            ArrayList<MoveAction> moveActions = new ArrayList<>();
-            for (int j = 0; j < TOTAL_CHARACTERS; j++) {
-                String id = Integer.toString(j);
-                if (rand.nextInt(5) == 0) {
-                    Position currentPosition = currentCharacterStates.get(id).getPosition();
-                    int destX = currentPosition.getX() + rand.nextInt(-1, 1 + 1);
-                    int destY = currentPosition.getY() + rand.nextInt(-1, 1 + 1);
-                    moveActions.add(new MoveAction(id, new Position(destX, destY)));
-                }
-            }
-
-            gameState.runTurn(moveActions);
+            gameState.runTurn();
             System.out.println(gameState);
         }
 

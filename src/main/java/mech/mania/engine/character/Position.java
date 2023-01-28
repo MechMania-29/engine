@@ -35,6 +35,11 @@ public class Position implements Cloneable {
         return this.x >= 0 && this.y >= 0 && this.x < BOARD_SIZE && this.y < BOARD_SIZE;
     }
 
+    public void add(Position other) {
+        this.x += other.x;
+        this.y += other.y;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
