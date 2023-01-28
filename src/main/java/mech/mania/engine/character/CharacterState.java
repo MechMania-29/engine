@@ -11,9 +11,9 @@ import java.util.Map;
 public class CharacterState implements Cloneable, Diffable {
     private final String id;
     private Position position;
-    private Boolean isZombie;
+    private boolean isZombie;
 
-    public CharacterState(String id, Position position, Boolean isZombie) {
+    public CharacterState(String id, Position position, boolean isZombie) {
         this.id = id;
         this.position = position;
         this.isZombie = isZombie;
@@ -27,7 +27,7 @@ public class CharacterState implements Cloneable, Diffable {
         return position;
     }
 
-    public Boolean isZombie() {
+    public boolean isZombie() {
         return isZombie;
     }
 
