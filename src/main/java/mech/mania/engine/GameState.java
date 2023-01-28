@@ -5,6 +5,7 @@ import mech.mania.engine.character.Position;
 import mech.mania.engine.character.action.MoveAction;
 import mech.mania.engine.log.Log;
 import mech.mania.engine.log.LogSetupState;
+import mech.mania.engine.player.Player;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,6 +18,8 @@ public class GameState implements Cloneable {
     private Log log;
     private int turn;
     private final Map<String, CharacterState> characterStates;
+    private final Player humanPlayer;
+    private final Player zombiePlayer;
 
     public GameState() {
         log = new Log(new LogSetupState());
@@ -39,6 +42,9 @@ public class GameState implements Cloneable {
             characterStates.put(id, characterState);
             modifiedCharacterStates.put(id, characterState.clone());
         }
+
+        humanPlayer = new Player(-1, true, false);
+        zombiePlayer = new Player(-1, true, true);
     };
 
     public Map<String, CharacterState> getCharacterStates() {
@@ -53,8 +59,11 @@ public class GameState implements Cloneable {
         return turn;
     }
 
-    public void runTurn(List<MoveAction> moveActions) {
+    public void runTurn() {
         turn++;
+
+        List<MoveAction> moveActions = (turn % 2 == 1) ? zombiePlayer.getInput(this) : humanPlayer.getInput(this);
+
         Map<String, CharacterState> modifiedCharacterStates = log.getTurnStates().get(turn).getModifiedCharacterStates();
         for (MoveAction moveAction : moveActions) {
             String id = moveAction.getExecutingCharacterId();
