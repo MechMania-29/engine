@@ -7,20 +7,20 @@ import mech.mania.engine.log.NullBooleanFilter;
 
 // A current state of a character. Basically a character at a certain point in time.
 public class CharacterState implements Cloneable {
-    @JsonProperty("id")
-    private final int id;
+    @JsonIgnore
+    private final String id;
     @JsonProperty("position") @JsonInclude(JsonInclude.Include.NON_NULL)
     private Position position;
     @JsonProperty("isZombie") @JsonInclude(value = JsonInclude.Include.CUSTOM, valueFilter = NullBooleanFilter.class)
     private Boolean isZombie;
 
-    public CharacterState(int id, Position position, Boolean isZombie) {
+    public CharacterState(String id, Position position, Boolean isZombie) {
         this.id = id;
         this.position = position;
         this.isZombie = isZombie;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 

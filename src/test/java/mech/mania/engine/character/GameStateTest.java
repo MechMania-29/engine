@@ -16,7 +16,7 @@ public class GameStateTest {
         int humansCounts = 0;
         int totalCount = 0;
 
-        for (CharacterState characterState : gameState.getCharacterStates()) {
+        for (CharacterState characterState : gameState.getCharacterStates().values()) {
             if (characterState.isZombie()) {
                 zombiesCount += 1;
             } else {
