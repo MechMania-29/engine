@@ -161,13 +161,18 @@ public class GameState implements Cloneable {
             Arrays.fill(row, '-');
         }
 
+        for (TerrainState terrainState : terrainStates.values()) {
+            Position position = terrainState.getPosition();
+            board[position.getY()][position.getX()] = terrainState.getImageId().charAt(0);
+        }
+
         for (CharacterState characterState : characterStates.values()) {
             Position position = characterState.getPosition();
             board[position.getY()][position.getX()] =
                     (characterState.isZombie()) ? 'Z' : 'H';
         }
 
-        sb.append("CharacterState{\n\t");
+        sb.append("GameState{\n\t");
 
         for (int i = 0; i < BOARD_SIZE; i++) {
             if (i != 0) {
