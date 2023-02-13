@@ -1,20 +1,12 @@
 package mech.mania.engine;
 
-import mech.mania.engine.character.CharacterState;
-import mech.mania.engine.character.Position;
-import mech.mania.engine.character.action.MoveAction;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
-import static mech.mania.engine.Config.TOTAL_CHARACTERS;
 import static mech.mania.engine.Config.TURNS;
 
 public class Engine {

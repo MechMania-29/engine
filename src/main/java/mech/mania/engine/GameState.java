@@ -2,7 +2,7 @@ package mech.mania.engine;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import mech.mania.engine.character.CharacterState;
-import mech.mania.engine.character.Position;
+import mech.mania.engine.util.Position;
 import mech.mania.engine.character.action.MoveAction;
 import mech.mania.engine.log.Log;
 import mech.mania.engine.log.LogSetupState;

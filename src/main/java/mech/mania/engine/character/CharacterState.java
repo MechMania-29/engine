@@ -2,7 +2,8 @@ package mech.mania.engine.character;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import mech.mania.engine.Diffable;
+import mech.mania.engine.util.Diffable;
+import mech.mania.engine.util.Position;
 
 import java.util.HashMap;
 import java.util.Map;

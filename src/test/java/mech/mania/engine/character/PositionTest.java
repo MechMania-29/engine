@@ -1,5 +1,6 @@
 package mech.mania.engine.character;
 
+import mech.mania.engine.util.Position;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

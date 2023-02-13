@@ -1,6 +1,6 @@
 package mech.mania.engine;
 
-import mech.mania.engine.character.Position;
+import mech.mania.engine.util.Position;
 
 import java.io.Serializable;
 import java.util.*;

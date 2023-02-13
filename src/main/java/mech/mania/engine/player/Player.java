@@ -2,9 +2,8 @@ package mech.mania.engine.player;
 
 import mech.mania.engine.GameState;
 import mech.mania.engine.character.CharacterState;
-import mech.mania.engine.character.Position;
+import mech.mania.engine.util.Position;
 import mech.mania.engine.character.action.MoveAction;
-import mech.mania.engine.log.LogTurnState;
 
 import java.util.*;
 
