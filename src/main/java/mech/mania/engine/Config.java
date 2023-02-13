@@ -21,4 +21,10 @@ public class Config implements Serializable {
             new Position(-1, 1), // DOWN_LEFT
             new Position(-1, -1) // UP_LEFT
     );
+
+    public static final List<String> TERRAIN_IMAGE_IDS = Arrays.asList(
+            "rock",
+            "tree",
+            "building"
+    );
 }
