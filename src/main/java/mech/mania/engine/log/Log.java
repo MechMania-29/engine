@@ -21,9 +21,10 @@ public class Log {
         this.turnStates = new ArrayList<>();
     }
 
-    public void storeCharacterStateDiffs(Map<String, Map<String, JsonNode>> characterStateDiffs) {
+    public void storeDiffs(Map<String, Map<String, JsonNode>> characterStateDiffs,
+                           Map<String, Map<String, JsonNode>> terrainStateDiffs) {
         int turn = turnStates.size();
-        LogTurnState turnState = new LogTurnState(turn, characterStateDiffs);
+        LogTurnState turnState = new LogTurnState(turn, characterStateDiffs, terrainStateDiffs);
 
         turnStates.add(turnState);
     }

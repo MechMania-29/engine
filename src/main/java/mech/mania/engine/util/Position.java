@@ -1,4 +1,4 @@
-package mech.mania.engine.character;
+package mech.mania.engine.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

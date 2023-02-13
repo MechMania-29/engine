@@ -2,16 +2,14 @@ package mech.mania.engine;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import mech.mania.engine.character.CharacterState;
-import mech.mania.engine.character.Position;
+import mech.mania.engine.terrain.TerrainState;
+import mech.mania.engine.util.Position;
 import mech.mania.engine.character.action.MoveAction;
 import mech.mania.engine.log.Log;
 import mech.mania.engine.log.LogSetupState;
 import mech.mania.engine.player.Player;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static mech.mania.engine.Config.*;
 
@@ -19,6 +17,7 @@ public class GameState implements Cloneable {
     private Log log;
     private int turn;
     private final Map<String, CharacterState> characterStates;
+    private final Map<String, TerrainState> terrainStates;
     private final Player humanPlayer;
     private final Player zombiePlayer;
 
@@ -26,7 +25,8 @@ public class GameState implements Cloneable {
         log = new Log(new LogSetupState());
         turn = 0;
         characterStates = new HashMap<>();
-        Map<String, Map<String, JsonNode>> diffs = new HashMap<>();
+        terrainStates = new HashMap<>();
+        Map<String, Map<String, JsonNode>> characterStateDiffs = new HashMap<>();
 
         for (int i = 0; i < TOTAL_CHARACTERS; i++) {
             String id = Integer.toString(i);
@@ -43,10 +43,25 @@ public class GameState implements Cloneable {
             characterStates.put(id, characterState);
 
             Map<String, JsonNode> diff = characterState.diff(null);
-            diffs.put(id, diff);
+            characterStateDiffs.put(id, diff);
         }
 
-        log.storeCharacterStateDiffs(diffs);
+        // TODO: Load terrain instead of randomly generating it
+        Map<String, Map<String, JsonNode>> terrainStateDiffs = new HashMap<>();
+        Random rand = new Random();
+        for (int i = 0; i < 500; i++) {
+            String id = Integer.toString(i);
+            Position position = new Position(rand.nextInt(0, BOARD_SIZE), rand.nextInt(0, BOARD_SIZE));
+            String imageId = TERRAIN_IMAGE_IDS.get(rand.nextInt(TERRAIN_IMAGE_IDS.size()));
+
+            TerrainState terrainState = new TerrainState(id, imageId, position);
+            terrainStates.put(id, terrainState);
+
+            Map<String, JsonNode> diff = terrainState.diff(null);
+            terrainStateDiffs.put(id, diff);
+        }
+
+        log.storeDiffs(characterStateDiffs, terrainStateDiffs);
 
         humanPlayer = new Player(-1, true, false);
         zombiePlayer = new Player(-1, true, true);
@@ -68,10 +83,16 @@ public class GameState implements Cloneable {
         // Increment turn
         turn++;
 
-        // Store character states for latter
+        // Store character states for later
         Map<String, CharacterState> previousCharacterStates = new HashMap<>();
         for (CharacterState characterState : characterStates.values()) {
             previousCharacterStates.put(characterState.getId(), characterState.clone());
+        }
+
+        // Store terrain states for later
+        Map<String, TerrainState> previousTerrainStates = new HashMap<>();
+        for (TerrainState terrainState : terrainStates.values()) {
+            previousTerrainStates.put(terrainState.getId(), terrainState.clone());
         }
 
         // Get player input
@@ -95,8 +116,8 @@ public class GameState implements Cloneable {
             characterStates.get(id).setPosition(destination);
         }
 
-        // Store diffs
-        Map<String, Map<String, JsonNode>> diffs = new HashMap<>();
+        // Store character diffs
+        Map<String, Map<String, JsonNode>> characterStateDiffs = new HashMap<>();
 
         for (String id : characterStates.keySet()) {
             CharacterState previous = previousCharacterStates.get(id);
@@ -108,10 +129,26 @@ public class GameState implements Cloneable {
                 continue;
             }
 
-            diffs.put(id, diff);
+            characterStateDiffs.put(id, diff);
         }
 
-        log.storeCharacterStateDiffs(diffs);
+        // Store terrain diffs
+        Map<String, Map<String, JsonNode>> terrainStateDiffs = new HashMap<>();
+
+        for (String id : terrainStates.keySet()) {
+            TerrainState previous = previousTerrainStates.get(id);
+            TerrainState current = terrainStates.get(id);
+
+            Map<String, JsonNode> diff = current.diff(previous);
+
+            if (diff == null) {
+                continue;
+            }
+
+            terrainStateDiffs.put(id, diff);
+        }
+
+        log.storeDiffs(characterStateDiffs, terrainStateDiffs);
     }
 
     @Override
@@ -124,13 +161,18 @@ public class GameState implements Cloneable {
             Arrays.fill(row, '-');
         }
 
+        for (TerrainState terrainState : terrainStates.values()) {
+            Position position = terrainState.getPosition();
+            board[position.getY()][position.getX()] = terrainState.getImageId().charAt(0);
+        }
+
         for (CharacterState characterState : characterStates.values()) {
             Position position = characterState.getPosition();
             board[position.getY()][position.getX()] =
                     (characterState.isZombie()) ? 'Z' : 'H';
         }
 
-        sb.append("CharacterState{\n\t");
+        sb.append("GameState{\n\t");
 
         for (int i = 0; i < BOARD_SIZE; i++) {
             if (i != 0) {

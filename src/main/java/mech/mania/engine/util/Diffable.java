@@ -1,4 +1,4 @@
-package mech.mania.engine;
+package mech.mania.engine.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

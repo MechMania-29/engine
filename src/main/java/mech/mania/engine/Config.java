@@ -1,6 +1,6 @@
 package mech.mania.engine;
 
-import mech.mania.engine.character.Position;
+import mech.mania.engine.util.Position;
 
 import java.io.Serializable;
 import java.util.*;
@@ -20,5 +20,11 @@ public class Config implements Serializable {
             new Position(1, -1), // UP_RIGHT
             new Position(-1, 1), // DOWN_LEFT
             new Position(-1, -1) // UP_LEFT
+    );
+
+    public static final List<String> TERRAIN_IMAGE_IDS = Arrays.asList(
+            "rock",
+            "tree",
+            "building"
     );
 }
