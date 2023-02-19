@@ -33,6 +33,10 @@ public class TerrainState implements Cloneable, Diffable {
         return position;
     }
 
+    public boolean isDestroyed() {
+        return destroyed;
+    }
+
     public void destroy() {
         destroyed = true;
     }

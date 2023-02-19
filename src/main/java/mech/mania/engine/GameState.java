@@ -171,6 +171,9 @@ public class GameState implements Cloneable {
         }
 
         for (TerrainState terrainState : terrainStates.values()) {
+            if (terrainState.isDestroyed()) {
+                continue;
+            }
             Position position = terrainState.getPosition();
             board[position.getY()][position.getX()] = terrainState.getImageId().charAt(0);
         }
