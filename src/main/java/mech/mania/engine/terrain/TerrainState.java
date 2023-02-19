@@ -12,11 +12,13 @@ public class TerrainState implements Cloneable, Diffable {
     private final String id;
     private final String imageId;
     private final Position position;
+    private boolean destroyed;
 
     public TerrainState(String id, String imageId, Position position) {
         this.id = id;
         this.imageId = imageId;
         this.position = position;
+        this.destroyed = false;
     }
 
     public String getId() {
@@ -29,6 +31,10 @@ public class TerrainState implements Cloneable, Diffable {
 
     public Position getPosition() {
         return position;
+    }
+
+    public void destroy() {
+        destroyed = true;
     }
 
     @Override
@@ -59,6 +65,10 @@ public class TerrainState implements Cloneable, Diffable {
 
         if (previousTerrainState == null || imageId != previousTerrainState.imageId) {
             diff.put("imageId", mapper.valueToTree(imageId));
+        }
+
+        if (previousTerrainState == null || destroyed != previousTerrainState.destroyed) {
+            diff.put("destroyed", mapper.valueToTree(destroyed));
         }
 
         if (diff.isEmpty()) {

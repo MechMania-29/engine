@@ -116,6 +116,15 @@ public class GameState implements Cloneable {
             characterStates.get(id).setPosition(destination);
         }
 
+        // TODO: This is just for testing purposes and should be removed
+        // Randomly pick some bits of terrain to destroy
+        Random rand = new Random();
+        for (int i = 0; i < 10; i++) {
+            TerrainState[] terrainStateValues = terrainStates.values().toArray(TerrainState[]::new);
+            TerrainState toModify = terrainStateValues[rand.nextInt(terrainStateValues.length)];
+            toModify.destroy();
+        }
+
         // Store character diffs
         Map<String, Map<String, JsonNode>> characterStateDiffs = new HashMap<>();
 
