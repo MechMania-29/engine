@@ -7,6 +7,8 @@ import static mech.mania.engine.Config.*;
 public class LogSetupState {
     @JsonProperty("theAnswerToLifeTheUniverseAndEverything")
     private final int theAnswerToLifeTheUniverseAndEverything;
+    @JsonProperty("diffModeEnabled")
+    private final boolean diffModeEnabled;
     @JsonProperty("boardSize")
     private final int boardSize;
     @JsonProperty("turns")
@@ -16,6 +18,7 @@ public class LogSetupState {
 
     public LogSetupState() {
         this.theAnswerToLifeTheUniverseAndEverything = 42;
+        this.diffModeEnabled = DIFF_MODE_ENABLED;
         this.boardSize = BOARD_SIZE;
         this.turns = TURNS;
         this.totalCharacters = TOTAL_CHARACTERS;

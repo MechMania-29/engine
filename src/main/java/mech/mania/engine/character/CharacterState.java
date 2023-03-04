@@ -8,8 +8,7 @@ import mech.mania.engine.util.Position;
 import java.util.HashMap;
 import java.util.Map;
 
-import static mech.mania.engine.Config.HUMAN_MOVE_SPEED;
-import static mech.mania.engine.Config.ZOMBIE_MOVE_SPEED;
+import static mech.mania.engine.Config.*;
 
 // A current state of a character. Basically a character at a certain point in time.
 public class CharacterState implements Cloneable, Diffable {
@@ -72,7 +71,7 @@ public class CharacterState implements Cloneable, Diffable {
 
             previousCharacterState = cs;
 
-            if (!previousCharacterState.id.equals(id)) {
+            if (!previousCharacterState.id.equals(id) && DIFF_MODE_ENABLED) {
                 return null;
             }
         }
@@ -80,11 +79,11 @@ public class CharacterState implements Cloneable, Diffable {
         ObjectMapper mapper = new ObjectMapper();
         HashMap<String, JsonNode> diff = new HashMap<>();
 
-        if (previousCharacterState == null || position != previousCharacterState.position) {
+        if (previousCharacterState == null || position != previousCharacterState.position || !DIFF_MODE_ENABLED) {
             diff.put("position", mapper.valueToTree(position));
         }
 
-        if (previousCharacterState == null || isZombie != previousCharacterState.isZombie) {
+        if (previousCharacterState == null || isZombie != previousCharacterState.isZombie || !DIFF_MODE_ENABLED) {
             diff.put("isZombie", mapper.valueToTree(isZombie));
         }
 

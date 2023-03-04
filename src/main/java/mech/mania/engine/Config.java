@@ -6,6 +6,10 @@ import java.io.Serializable;
 import java.util.*;
 
 public class Config implements Serializable {
+    // This controls whether the diff serialization is used or not. Turning this to false
+    // significantly increases the size of the game log, but may prevent weird sync issues
+    // depending on various cases. DO NOT CHANGE without talking to Timothy.
+    public static final boolean DIFF_MODE_ENABLED = true;
     // The size of the board, always square
     public static final int BOARD_SIZE = 100;
     // The number of turns in a game, each player gets their own turn
