@@ -8,6 +8,8 @@ import mech.mania.engine.util.Position;
 import java.util.HashMap;
 import java.util.Map;
 
+import static mech.mania.engine.Config.DIFF_MODE_ENABLED;
+
 public class TerrainState implements Cloneable, Diffable {
     private final String id;
     private final String imageId;
@@ -55,7 +57,7 @@ public class TerrainState implements Cloneable, Diffable {
 
             previousTerrainState = ts;
 
-            if (!previousTerrainState.id.equals(id)) {
+            if (!previousTerrainState.id.equals(id) && DIFF_MODE_ENABLED) {
                 return null;
             }
         }
@@ -63,15 +65,15 @@ public class TerrainState implements Cloneable, Diffable {
         ObjectMapper mapper = new ObjectMapper();
         HashMap<String, JsonNode> diff = new HashMap<>();
 
-        if (previousTerrainState == null || position != previousTerrainState.position) {
+        if (previousTerrainState == null || position != previousTerrainState.position || !DIFF_MODE_ENABLED) {
             diff.put("position", mapper.valueToTree(position));
         }
 
-        if (previousTerrainState == null || imageId != previousTerrainState.imageId) {
+        if (previousTerrainState == null || imageId != previousTerrainState.imageId || !DIFF_MODE_ENABLED) {
             diff.put("imageId", mapper.valueToTree(imageId));
         }
 
-        if (previousTerrainState == null || destroyed != previousTerrainState.destroyed) {
+        if (previousTerrainState == null || destroyed != previousTerrainState.destroyed || !DIFF_MODE_ENABLED) {
             diff.put("destroyed", mapper.valueToTree(destroyed));
         }
 
