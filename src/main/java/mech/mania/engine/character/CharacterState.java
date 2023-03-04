@@ -8,16 +8,21 @@ import mech.mania.engine.util.Position;
 import java.util.HashMap;
 import java.util.Map;
 
+import static mech.mania.engine.Config.HUMAN_MOVE_SPEED;
+import static mech.mania.engine.Config.ZOMBIE_MOVE_SPEED;
+
 // A current state of a character. Basically a character at a certain point in time.
 public class CharacterState implements Cloneable, Diffable {
     private final String id;
     private Position position;
     private boolean isZombie;
+    private final int moveSpeed;
 
     public CharacterState(String id, Position position, boolean isZombie) {
         this.id = id;
         this.position = position;
         this.isZombie = isZombie;
+        this.moveSpeed = isZombie ? ZOMBIE_MOVE_SPEED : HUMAN_MOVE_SPEED;
     }
 
     public String getId() {
@@ -38,6 +43,10 @@ public class CharacterState implements Cloneable, Diffable {
 
     public void makeZombie() {
         isZombie = true;
+    }
+
+    public int getMoveSpeed() {
+        return moveSpeed;
     }
 
     @Override

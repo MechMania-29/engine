@@ -7,8 +7,6 @@ import mech.mania.engine.character.action.MoveAction;
 
 import java.util.*;
 
-import static mech.mania.engine.Config.*;
-
 public class Player {
     private int port;
     private boolean isComputer;
@@ -20,51 +18,27 @@ public class Player {
         this.isZombie = isZombie;
     }
 
-    public List<MoveAction> getInput(GameState gameState) {
-        Map<String, CharacterState> allCharacterStates = gameState.getCharacterStates();
+    public boolean isZombie() {
+        return isZombie;
+    }
 
-        // Get controllable character states
-        Map<String, CharacterState> controllableCharacterStates = new HashMap<>();
-
-        for (CharacterState characterState : allCharacterStates.values()) {
-            if (characterState.isZombie() == isZombie) {
-                controllableCharacterStates.put(characterState.getId(), characterState);
-            }
-        }
-
-        // Get possible moves for each character
-        Map<String, Map<String, Position>> possibleMoves = new HashMap<>();
-
-        for (CharacterState characterState : controllableCharacterStates.values()) {
-            Map<String, Position> moves = new HashMap<>();
-
-            for (Position direction : DIRECTIONS) {
-                Position newPosition = characterState.getPosition().clone();
-                newPosition.add(direction);
-
-                moves.put(newPosition.toString(), newPosition);
-            }
-
-            possibleMoves.put(characterState.getId(), moves);
-        }
-
-        // Read in move actions
+    public List<MoveAction> getMoveInput(Map<String, Map<String, Position>> possibleMoves) {
         List<MoveAction> moveActions;
         if (!isComputer) {
-            //TODO: Connect to port and read in data
+            //TODO: Connect to port and read in data, and we can send possibleMoves to help client
             moveActions = new ArrayList<>();
         } else {
+            // Otherwise, for computer, pick one of the valid moves and just do it
             Random rand = new Random();
 
             moveActions = new ArrayList<>();
 
-            for (CharacterState characterState : controllableCharacterStates.values()) {
-                if (rand.nextInt(5) == 0) {
-                    Position[] moves = possibleMoves.get(characterState.getId()).values().toArray(new Position[0]);
-                    Position newPosition = moves[rand.nextInt(moves.length)];
+            for (String id : possibleMoves.keySet()) {
+                Map<String, Position> possibleMovesForThisCharacter = possibleMoves.get(id);
+                Position[] moves = possibleMovesForThisCharacter.values().toArray(new Position[0]);
+                Position newPosition = moves[rand.nextInt(moves.length)];
 
-                    moveActions.add(new MoveAction(characterState.getId(), newPosition));
-                }
+                moveActions.add(new MoveAction(id, newPosition));
             }
         }
 
