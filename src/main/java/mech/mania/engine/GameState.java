@@ -95,23 +95,28 @@ public class GameState implements Cloneable {
             previousTerrainStates.put(terrainState.getId(), terrainState.clone());
         }
 
+        // Figure out whose turn it is
+        Player player = (turn % 2 == 1) ? zombiePlayer : humanPlayer;
+
         // Get player input
-        List<MoveAction> moveActions = (turn % 2 == 1) ? zombiePlayer.getInput(this) : humanPlayer.getInput(this);
+        Map<String, Map<String, Position>> possibleMoves = getPossibleMoves(player.isZombie());
+        List<MoveAction> moveActions = player.getMoveInput(possibleMoves);
 
         // Apply move actions
         for (MoveAction moveAction : moveActions) {
             String id = moveAction.getExecutingCharacterId();
+            Map<String, Position> possibleMovesForThisCharacter = possibleMoves.get(id);
 
             if (!characterStates.containsKey(id)) {
                 continue;
             }
 
             Position destination = moveAction.getDestination();
-            if (!destination.inBounds()) {
+
+            // Ignore if it's not a possible move
+            if (!possibleMovesForThisCharacter.containsKey(destination.toString())) {
                 continue;
             }
-
-            // TODO: Distance check
 
             characterStates.get(id).setPosition(destination);
         }
@@ -160,6 +165,38 @@ public class GameState implements Cloneable {
         log.storeDiffs(characterStateDiffs, terrainStateDiffs);
     }
 
+    private Map<String, Map<String, Position>> getPossibleMoves(boolean isZombie) {
+        // Get controllable character states
+        Map<String, CharacterState> controllableCharacterStates = new HashMap<>();
+
+        for (CharacterState characterState : characterStates.values()) {
+            if (characterState.isZombie() == isZombie) {
+                controllableCharacterStates.put(characterState.getId(), characterState);
+            }
+        }
+
+        // Get possible moves for each character
+        Map<String, Map<String, Position>> possibleMoves = new HashMap<>();
+
+        for (CharacterState characterState : controllableCharacterStates.values()) {
+            Map<String, Position> moves = new HashMap<>();
+
+            for (Position direction : DIRECTIONS) {
+                Position newPosition = characterState.getPosition().clone();
+                newPosition.add(direction);
+                if (!newPosition.inBounds()) {
+                    continue;
+                }
+
+                moves.put(newPosition.toString(), newPosition);
+            }
+
+            possibleMoves.put(characterState.getId(), moves);
+        }
+
+        return possibleMoves;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -198,14 +235,5 @@ public class GameState implements Cloneable {
         sb.append("\n}");
 
         return sb.toString();
-    }
-
-    @Override
-    public GameState clone() {
-        try {
-            return (GameState) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
     }
 }
