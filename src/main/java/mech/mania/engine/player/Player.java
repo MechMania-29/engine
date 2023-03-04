@@ -35,12 +35,10 @@ public class Player {
 
             for (String id : possibleMoves.keySet()) {
                 Map<String, Position> possibleMovesForThisCharacter = possibleMoves.get(id);
-                if (rand.nextInt(5) == 0) {
-                    Position[] moves = possibleMovesForThisCharacter.values().toArray(new Position[0]);
-                    Position newPosition = moves[rand.nextInt(moves.length)];
+                Position[] moves = possibleMovesForThisCharacter.values().toArray(new Position[0]);
+                Position newPosition = moves[rand.nextInt(moves.length)];
 
-                    moveActions.add(new MoveAction(id, newPosition));
-                }
+                moveActions.add(new MoveAction(id, newPosition));
             }
         }
 

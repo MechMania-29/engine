@@ -103,23 +103,7 @@ public class GameState implements Cloneable {
         List<MoveAction> moveActions = player.getMoveInput(possibleMoves);
 
         // Apply move actions
-        for (MoveAction moveAction : moveActions) {
-            String id = moveAction.getExecutingCharacterId();
-            Map<String, Position> possibleMovesForThisCharacter = possibleMoves.get(id);
-
-            if (!characterStates.containsKey(id)) {
-                continue;
-            }
-
-            Position destination = moveAction.getDestination();
-
-            // Ignore if it's not a possible move
-            if (!possibleMovesForThisCharacter.containsKey(destination.toString())) {
-                continue;
-            }
-
-            characterStates.get(id).setPosition(destination);
-        }
+        applyMoveActions(moveActions, possibleMoves);
 
         // TODO: This is just for testing purposes and should be removed
         // Randomly pick some bits of terrain to destroy
@@ -165,6 +149,69 @@ public class GameState implements Cloneable {
         log.storeDiffs(characterStateDiffs, terrainStateDiffs);
     }
 
+    private void applyMoveActions(List<MoveAction> moveActions, Map<String, Map<String, Position>> possibleMoves) {
+        for (MoveAction moveAction : moveActions) {
+            String id = moveAction.getExecutingCharacterId();
+            Position destination = moveAction.getDestination();
+            String destinationKey = destination.toString();
+
+            // Ignore if they can't move this character
+            if (!possibleMoves.containsKey(id)) {
+                continue;
+            }
+
+            // Ignore if it's not a possible move
+            Map<String, Position> possibleMovesForThisCharacter = possibleMoves.get(id);
+            if (!possibleMovesForThisCharacter.containsKey(destinationKey)) {
+                continue;
+            }
+
+            // Apply move action
+            characterStates.get(id).setPosition(destination);
+        }
+    }
+
+    private Map<String, Position> getPossibleMoves(Position start, int distance) {
+        Map<String, Position> moves = new HashMap<>();
+
+        if (distance <= 0) {
+            moves.put(start.toString(), start.clone());
+            return moves;
+        }
+
+        for (Position direction : DIRECTIONS) {
+            Position newPosition = start.clone();
+            newPosition.add(direction);
+            String key = newPosition.toString();
+
+            // Check in bounds
+            if (!newPosition.inBounds()) {
+                continue;
+            }
+
+            // Check not terrain
+            if (terrainStates.containsKey(key) && !terrainStates.get(key).isDestroyed()) {
+                continue;
+            }
+
+            // If not already added, add it
+            if (!moves.containsKey(key)) {
+                moves.put(key, newPosition);
+            }
+
+            // Recursively check for next moves
+            Map<String, Position> fromThere = getPossibleMoves(newPosition, distance - 1);
+
+            fromThere.forEach((fromThereKey, fromThereNewPosition) -> {
+                if (!moves.containsKey(fromThereKey)) {
+                    moves.put(fromThereKey, fromThereNewPosition);
+                }
+            });
+        }
+
+        return moves;
+    }
+
     private Map<String, Map<String, Position>> getPossibleMoves(boolean isZombie) {
         // Get controllable character states
         Map<String, CharacterState> controllableCharacterStates = new HashMap<>();
@@ -179,17 +226,7 @@ public class GameState implements Cloneable {
         Map<String, Map<String, Position>> possibleMoves = new HashMap<>();
 
         for (CharacterState characterState : controllableCharacterStates.values()) {
-            Map<String, Position> moves = new HashMap<>();
-
-            for (Position direction : DIRECTIONS) {
-                Position newPosition = characterState.getPosition().clone();
-                newPosition.add(direction);
-                if (!newPosition.inBounds()) {
-                    continue;
-                }
-
-                moves.put(newPosition.toString(), newPosition);
-            }
+            Map<String, Position> moves = getPossibleMoves(characterState.getPosition(), characterState.getMoveSpeed());
 
             possibleMoves.put(characterState.getId(), moves);
         }
