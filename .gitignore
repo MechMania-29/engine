@@ -1,6 +1,7 @@
 .idea/
 build/
 gamelogs/
+debuglog/
 
 .gradle/
 

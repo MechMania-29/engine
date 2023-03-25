@@ -5,28 +5,55 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Random;
 
 import static mech.mania.engine.Config.TURNS;
 
 public class Engine {
+    private static void printState(GameState gameState, String id) {
+        System.out.println(gameState);
+
+        String debug = System.getenv("DEBUG");
+        if (debug != null && !debug.equals("1") && !debug.equals("true")) {
+            return;
+        }
+
+        String output = "debuglog/game_" + id + "/turn_" + gameState.getTurn() + ".txt";
+
+
+        File file = new File(output);
+        try {
+            file.getParentFile().mkdirs();
+        } catch (NullPointerException e) {
+            throw new RuntimeException(e);
+        }
+
+        PrintWriter printWriter = null;
+        try {
+            printWriter = new PrintWriter(file);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            printWriter.println(gameState);
+        } finally {
+            printWriter.close();
+        }
+    }
     public static void main(String[] args) {
-        Random rand = new Random();
+        String id = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss").format(LocalDateTime.now());
 
         GameState gameState = new GameState();
 
-        System.out.println(gameState);
+        printState(gameState, id);
 
         while (gameState.getTurn() < TURNS) {
             gameState.runTurn();
-            System.out.println(gameState);
+            printState(gameState, id);
         }
 
-        System.out.println(gameState.getLog());
-
-        String output = System.getProperty("output") == null ?
-                "gamelogs/game_" + DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss").format(LocalDateTime.now()) + ".json" :
-                System.getProperty("output");
+        String output = System.getenv("output") == null ?
+                "gamelogs/game_" + id + ".json" :
+                System.getenv("output");
 
 
         File file = new File(output);
