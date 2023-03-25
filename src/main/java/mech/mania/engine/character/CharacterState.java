@@ -17,6 +17,7 @@ public class CharacterState implements Cloneable, Diffable {
     private boolean isZombie;
     private final int moveSpeed;
     private final int attackRange;
+    private final int health;
 
     public CharacterState(String id, Position position, boolean isZombie) {
         this.id = id;
@@ -24,6 +25,7 @@ public class CharacterState implements Cloneable, Diffable {
         this.isZombie = isZombie;
         this.moveSpeed = isZombie ? ZOMBIE_MOVE_SPEED : HUMAN_MOVE_SPEED;
         this.attackRange = isZombie ? ZOMBIE_ATTACK_RANGE : HUMAN_ATTACK_RANGE;
+        this.health = isZombie ? ZOMBIE_HEALTH : HUMAN_HEALTH;
     }
 
     public String getId() {
