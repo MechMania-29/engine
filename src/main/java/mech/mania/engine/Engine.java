@@ -13,11 +13,9 @@ public class Engine {
         System.out.println(gameState);
 
         String debug = System.getenv("DEBUG");
-        System.out.println("Debug is " + debug);
         if (debug != null && !debug.equals("1") && !debug.equals("true")) {
             return;
         }
-        System.out.println("Debug accepted");
 
         String output = "debuglog/game_" + id + "/turn_" + gameState.getTurn() + ".txt";
 
@@ -53,9 +51,9 @@ public class Engine {
             printState(gameState, id);
         }
 
-        String output = System.getProperty("output") == null ?
+        String output = System.getenv("output") == null ?
                 "gamelogs/game_" + id + ".json" :
-                System.getProperty("output");
+                System.getenv("output");
 
 
         File file = new File(output);
