@@ -106,6 +106,10 @@ public class CharacterState implements Cloneable, Diffable {
             diff.put("isZombie", mapper.valueToTree(isZombie));
         }
 
+        if (previousCharacterState == null || health != previousCharacterState.health || !DIFF_MODE_ENABLED) {
+            diff.put("health", mapper.valueToTree(health));
+        }
+
         if (diff.isEmpty()) {
             return null;
         }
