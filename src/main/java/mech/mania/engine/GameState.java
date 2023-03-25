@@ -99,7 +99,7 @@ public class GameState implements Cloneable {
         Player player = (turn % 2 == 1) ? zombiePlayer : humanPlayer;
 
         // Get player input
-        Map<String, Map<String, Position>> possibleMoves = getPossibleMoves(player.isZombie());
+        Map<String, Map<String, Position>> possibleMoves = getPossibleMovePositions(player.isZombie());
         List<MoveAction> moveActions = player.getMoveInput(possibleMoves);
 
         // Apply move actions
@@ -212,7 +212,7 @@ public class GameState implements Cloneable {
         return moves;
     }
 
-    private Map<String, Map<String, Position>> getPossibleMoves(boolean isZombie) {
+    private Map<String, Map<String, Position>> getPossibleMovePositions(boolean isZombie) {
         // Get controllable character states
         Map<String, CharacterState> controllableCharacterStates = new HashMap<>();
 
