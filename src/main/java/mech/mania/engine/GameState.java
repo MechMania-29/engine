@@ -171,10 +171,10 @@ public class GameState implements Cloneable {
         }
     }
 
-    private Map<String, Position> getPossibleMoves(Position start, int distance) {
+    private Map<String, Position> getTilesInRange(Position start, int range) {
         Map<String, Position> moves = new HashMap<>();
 
-        if (distance <= 0) {
+        if (range <= 0) {
             moves.put(start.toString(), start.clone());
             return moves;
         }
@@ -200,7 +200,7 @@ public class GameState implements Cloneable {
             }
 
             // Recursively check for next moves
-            Map<String, Position> fromThere = getPossibleMoves(newPosition, distance - 1);
+            Map<String, Position> fromThere = getTilesInRange(newPosition, range - 1);
 
             fromThere.forEach((fromThereKey, fromThereNewPosition) -> {
                 if (!moves.containsKey(fromThereKey)) {
@@ -226,7 +226,7 @@ public class GameState implements Cloneable {
         Map<String, Map<String, Position>> possibleMoves = new HashMap<>();
 
         for (CharacterState characterState : controllableCharacterStates.values()) {
-            Map<String, Position> moves = getPossibleMoves(characterState.getPosition(), characterState.getMoveSpeed());
+            Map<String, Position> moves = getTilesInRange(characterState.getPosition(), characterState.getMoveSpeed());
 
             possibleMoves.put(characterState.getId(), moves);
         }
