@@ -15,9 +15,9 @@ public class CharacterState implements Cloneable, Diffable {
     private final String id;
     private Position position;
     private boolean isZombie;
-    private final int moveSpeed;
-    private final int attackRange;
-    private final int health;
+    private int moveSpeed;
+    private int attackRange;
+    private int health;
 
     public CharacterState(String id, Position position, boolean isZombie) {
         this.id = id;
@@ -40,16 +40,31 @@ public class CharacterState implements Cloneable, Diffable {
         return isZombie;
     }
 
+    public int getMoveSpeed() {
+        return moveSpeed;
+    }
+
+    public int getAttackRange() {
+        return attackRange;
+    }
+
+    public int getHealth() {
+        return health;
+    }
+
     public void setPosition(Position position) {
         this.position = position;
     }
 
     public void makeZombie() {
         isZombie = true;
+        moveSpeed = ZOMBIE_MOVE_SPEED;
+        attackRange = ZOMBIE_ATTACK_RANGE;
+        health = ZOMBIE_HEALTH;
     }
 
-    public int getMoveSpeed() {
-        return moveSpeed;
+    public void setHealth(int health) {
+        this.health = health;
     }
 
     @Override

@@ -2,6 +2,8 @@ package mech.mania.engine;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import mech.mania.engine.character.CharacterState;
+import mech.mania.engine.character.action.AttackAction;
+import mech.mania.engine.character.action.AttackActionType;
 import mech.mania.engine.terrain.TerrainState;
 import mech.mania.engine.util.Position;
 import mech.mania.engine.character.action.MoveAction;
@@ -98,12 +100,19 @@ public class GameState implements Cloneable {
         // Figure out whose turn it is
         Player player = (turn % 2 == 1) ? zombiePlayer : humanPlayer;
 
-        // Get player input
+        // Get player move input
         Map<String, Map<String, Position>> possibleMoves = getPossibleMovePositions(player.isZombie());
-        List<MoveAction> moveActions = player.getMoveInput(possibleMoves);
+        List<MoveAction> moveActions = player.getMoveInput(possibleMoves, characterStates);
 
         // Apply move actions
         applyMoveActions(moveActions, possibleMoves);
+
+        // Get player attack input
+        Map<String, List<AttackAction>> possibleAttackActions = getPossibleAttackActions(player.isZombie());
+        List<AttackAction> attackActions = player.getAttackInput(possibleAttackActions);
+
+        // Apply attack actions
+        applyAttackActions(attackActions, possibleAttackActions);
 
         // TODO: This is just for testing purposes and should be removed
         // Randomly pick some bits of terrain to destroy
@@ -170,6 +179,44 @@ public class GameState implements Cloneable {
             characterStates.get(id).setPosition(destination);
         }
     }
+    private void applyAttackActions(List<AttackAction> attackActions, Map<String, List<AttackAction>> possibleAttackActions) {
+        for (AttackAction attackAction : attackActions) {
+            String id = attackAction.getExecutingCharacterId();
+            CharacterState executing = characterStates.get(id);
+            String attackingId = attackAction.getAttackingId();
+            CharacterState attacking = characterStates.get(attackingId);
+
+            // Ignore if they can't use this character
+            if (!possibleAttackActions.containsKey(id)) {
+                continue;
+            }
+
+            // Ignore if it's not a possible move
+            boolean isPossible = false;
+
+            for (AttackAction possible : possibleAttackActions.get(id)) {
+                if (attackAction == possible) {
+                    isPossible = true;
+                    break;
+                }
+            }
+
+            if (!isPossible) {
+                continue;
+            }
+
+            if (executing.isZombie()) {
+                attacking.setHealth(attacking.getHealth() - 1);
+
+                if (attacking.getHealth() == 0) {
+                    attacking.makeZombie();
+                }
+            } else {
+                // TODO: Add human attacking zombie logic
+                System.out.println("Unimplemented human attacking zombie: " + id + " to " + attackingId);
+            }
+        }
+    }
 
     private Map<String, Position> getTilesInRange(Position start, int range) {
         Map<String, Position> moves = new HashMap<>();
@@ -232,6 +279,44 @@ public class GameState implements Cloneable {
         }
 
         return possibleMoves;
+    }
+    private Map<String, List<AttackAction>> getPossibleAttackActions(boolean isZombie) {
+        // Get controllable character states
+        Map<String, CharacterState> controllableCharacterStates = new HashMap<>();
+
+        for (CharacterState characterState : characterStates.values()) {
+            if (characterState.isZombie() == isZombie) {
+                controllableCharacterStates.put(characterState.getId(), characterState);
+            }
+        }
+
+        // Get possible attack actions for each character
+        Map<String, List<AttackAction>> possibleAttackActions = new HashMap<>();
+
+        for (CharacterState characterState : controllableCharacterStates.values()) {
+            Map<String, Position> attackable = getTilesInRange(characterState.getPosition(), characterState.getAttackRange());
+            List<AttackAction> attackActions = new ArrayList<>();
+
+            for (CharacterState otherCharacterState : characterStates.values()) {
+                // If is on our team, we don't attack them
+                if (otherCharacterState.isZombie() == isZombie) {
+                    continue;
+                }
+
+                // If they are not within attackable range, we cannot attack them
+                if (!attackable.containsKey(otherCharacterState.getPosition().toString())) {
+                    continue;
+                }
+
+                // We can attack them
+                attackActions.add(new AttackAction(characterState.getId(), otherCharacterState.getId(), AttackActionType.CHARACTER));
+            }
+
+            // Add all attack actions for character
+            possibleAttackActions.put(characterState.getId(), attackActions);
+        }
+
+        return possibleAttackActions;
     }
 
     @Override
