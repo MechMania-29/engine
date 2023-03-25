@@ -206,6 +206,9 @@ public class GameState implements Cloneable {
             }
 
             if (executing.isZombie()) {
+                if (attacking.isZombie()) {
+                    continue;
+                }
                 attacking.setHealth(attacking.getHealth() - 1);
 
                 if (attacking.getHealth() == 0) {
