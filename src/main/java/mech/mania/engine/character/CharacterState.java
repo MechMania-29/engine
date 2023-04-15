@@ -15,17 +15,21 @@ public class CharacterState implements Cloneable, Diffable {
     private final String id;
     private Position position;
     private boolean isZombie;
+    private int health;
     private int moveSpeed;
     private int attackRange;
-    private int health;
+    private int attackCooldown;
+    private int attackCooldownLeft = 0;
+    private int stunnedEffectLeft = 0;
 
     public CharacterState(String id, Position position, boolean isZombie) {
         this.id = id;
         this.position = position;
         this.isZombie = isZombie;
+        this.health = isZombie ? ZOMBIE_HEALTH : HUMAN_HEALTH;
         this.moveSpeed = isZombie ? ZOMBIE_MOVE_SPEED : HUMAN_MOVE_SPEED;
         this.attackRange = isZombie ? ZOMBIE_ATTACK_RANGE : HUMAN_ATTACK_RANGE;
-        this.health = isZombie ? ZOMBIE_HEALTH : HUMAN_HEALTH;
+        this.attackCooldown = isZombie ? ZOMBIE_ATTACK_COOLDOWN : HUMAN_ATTACK_COOLDOWN;
     }
 
     public String getId() {
@@ -44,12 +48,20 @@ public class CharacterState implements Cloneable, Diffable {
         return moveSpeed;
     }
 
+    public int getHealth() {
+        return health;
+    }
+
     public int getAttackRange() {
         return attackRange;
     }
 
-    public int getHealth() {
-        return health;
+    public boolean canMove() {
+        return stunnedEffectLeft == 0;
+    }
+
+    public boolean canAttack() {
+        return attackCooldownLeft == 0 && stunnedEffectLeft == 0;
     }
 
     public void setPosition(Position position) {
@@ -65,6 +77,25 @@ public class CharacterState implements Cloneable, Diffable {
 
     public void setHealth(int health) {
         this.health = health;
+    }
+
+    public void resetAttackCooldownLeft() {
+        // This is +1 because the reset is immediately decremented at the end of the turn
+        this.attackCooldownLeft = this.attackCooldown + 1;
+    }
+
+    public void stun() {
+        this.stunnedEffectLeft = STUNNED_DURATION;
+    }
+
+    public void applyCooldownAndEffectDecay() {
+        if (this.attackCooldownLeft > 0) {
+            this.attackCooldownLeft -= 1;
+        }
+
+        if (this.stunnedEffectLeft > 0) {
+            this.stunnedEffectLeft -= 1;
+        }
     }
 
     @Override
