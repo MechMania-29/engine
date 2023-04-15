@@ -27,6 +27,10 @@ public class Config implements Serializable {
     public static final int HUMAN_ATTACK_RANGE = 3;
     public static final int ZOMBIE_ATTACK_RANGE = 1;
 
+    // Default attack cooldowns for humans and zombies
+    public static final int HUMAN_ATTACK_COOLDOWN = 3;
+    public static final int ZOMBIE_ATTACK_COOLDOWN = 0;
+
     // Default health for humans and zombies
     public static final int HUMAN_HEALTH = 1;
     public static final int ZOMBIE_HEALTH = -1; // Symbolic, do not change

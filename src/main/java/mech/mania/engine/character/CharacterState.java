@@ -17,6 +17,8 @@ public class CharacterState implements Cloneable, Diffable {
     private boolean isZombie;
     private int moveSpeed;
     private int attackRange;
+    private int attackCooldown;
+    private int attackCooldownLeft;
     private int health;
 
     public CharacterState(String id, Position position, boolean isZombie) {
@@ -25,6 +27,8 @@ public class CharacterState implements Cloneable, Diffable {
         this.isZombie = isZombie;
         this.moveSpeed = isZombie ? ZOMBIE_MOVE_SPEED : HUMAN_MOVE_SPEED;
         this.attackRange = isZombie ? ZOMBIE_ATTACK_RANGE : HUMAN_ATTACK_RANGE;
+        this.attackCooldown = isZombie ? ZOMBIE_ATTACK_COOLDOWN : HUMAN_ATTACK_COOLDOWN;
+        this.attackCooldownLeft = 0;
         this.health = isZombie ? ZOMBIE_HEALTH : HUMAN_HEALTH;
     }
 
@@ -48,6 +52,10 @@ public class CharacterState implements Cloneable, Diffable {
         return attackRange;
     }
 
+    public int getAttackCooldownLeft() {
+        return attackCooldownLeft;
+    }
+
     public int getHealth() {
         return health;
     }
@@ -61,6 +69,17 @@ public class CharacterState implements Cloneable, Diffable {
         moveSpeed = ZOMBIE_MOVE_SPEED;
         attackRange = ZOMBIE_ATTACK_RANGE;
         health = ZOMBIE_HEALTH;
+    }
+
+    public void decrementAttackCooldownLeft() {
+        if (this.attackCooldownLeft == 0) {
+            return;
+        }
+        this.attackCooldownLeft -= 1;
+    }
+
+    public void resetAttackCooldownLeft() {
+        this.attackCooldownLeft = this.attackCooldown;
     }
 
     public void setHealth(int health) {
