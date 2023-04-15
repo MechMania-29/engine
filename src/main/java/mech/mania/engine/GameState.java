@@ -114,6 +114,9 @@ public class GameState implements Cloneable {
         // Apply attack actions
         applyAttackActions(attackActions, possibleAttackActions);
 
+        // Decrement attack cooldowns and effects
+        applyCooldownAndEffectDecay(player.isZombie());
+
         // TODO: This is just for testing purposes and should be removed
         // Randomly pick some bits of terrain to destroy
         Random rand = new Random();
@@ -206,6 +209,7 @@ public class GameState implements Cloneable {
             }
 
             if (executing.isZombie()) {
+                // No attacking zombies as a zombie
                 if (attacking.isZombie()) {
                     continue;
                 }
@@ -215,8 +219,14 @@ public class GameState implements Cloneable {
                     attacking.makeZombie();
                 }
             } else {
-                // TODO: Add human attacking zombie logic
-                System.out.println("Unimplemented human attacking zombie: " + id + " to " + attackingId);
+                // No attacking humans as a human
+                if (!attacking.isZombie()) {
+                    continue;
+                }
+
+                attacking.stun();
+
+                executing.resetAttackCooldownLeft();
             }
         }
     }
@@ -276,7 +286,8 @@ public class GameState implements Cloneable {
         Map<String, Map<String, Position>> possibleMoves = new HashMap<>();
 
         for (CharacterState characterState : controllableCharacterStates.values()) {
-            Map<String, Position> moves = getTilesInRange(characterState.getPosition(), characterState.getMoveSpeed());
+            int range = characterState.canMove() ? characterState.getMoveSpeed() : 0;
+            Map<String, Position> moves = getTilesInRange(characterState.getPosition(), range);
 
             possibleMoves.put(characterState.getId(), moves);
         }
@@ -300,19 +311,21 @@ public class GameState implements Cloneable {
             Map<String, Position> attackable = getTilesInRange(characterState.getPosition(), characterState.getAttackRange());
             List<AttackAction> attackActions = new ArrayList<>();
 
-            for (CharacterState otherCharacterState : characterStates.values()) {
-                // If is on our team, we don't attack them
-                if (otherCharacterState.isZombie() == isZombie) {
-                    continue;
-                }
+            if (characterState.canAttack()) {
+                for (CharacterState otherCharacterState : characterStates.values()) {
+                    // If is on our team, we don't attack them
+                    if (otherCharacterState.isZombie() == isZombie) {
+                        continue;
+                    }
 
-                // If they are not within attackable range, we cannot attack them
-                if (!attackable.containsKey(otherCharacterState.getPosition().toString())) {
-                    continue;
-                }
+                    // If they are not within attackable range, we cannot attack them
+                    if (!attackable.containsKey(otherCharacterState.getPosition().toString())) {
+                        continue;
+                    }
 
-                // We can attack them
-                attackActions.add(new AttackAction(characterState.getId(), otherCharacterState.getId(), AttackActionType.CHARACTER));
+                    // We can attack them
+                    attackActions.add(new AttackAction(characterState.getId(), otherCharacterState.getId(), AttackActionType.CHARACTER));
+                }
             }
 
             // Add all attack actions for character
@@ -320,6 +333,14 @@ public class GameState implements Cloneable {
         }
 
         return possibleAttackActions;
+    }
+
+    private void applyCooldownAndEffectDecay(boolean isZombie) {
+        for (CharacterState character : characterStates.values()) {
+            if (character.isZombie() == isZombie) {
+                character.applyCooldownAndEffectDecay();
+            }
+        }
     }
 
     @Override

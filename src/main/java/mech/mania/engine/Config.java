@@ -31,6 +31,9 @@ public class Config implements Serializable {
     public static final int HUMAN_ATTACK_COOLDOWN = 3;
     public static final int ZOMBIE_ATTACK_COOLDOWN = 0;
 
+    // The duration that a zombie is stunned for
+    public static final int STUNNED_DURATION = 1;
+
     // Default health for humans and zombies
     public static final int HUMAN_HEALTH = 1;
     public static final int ZOMBIE_HEALTH = -1; // Symbolic, do not change
