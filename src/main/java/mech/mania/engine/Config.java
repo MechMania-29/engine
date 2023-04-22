@@ -34,9 +34,10 @@ public class Config implements Serializable {
     // The duration that a zombie is stunned for
     public static final int STUNNED_DURATION = 1;
 
-    // Default health for humans and zombies
+    // Default health for humans, zombies, and terrain
     public static final int HUMAN_HEALTH = 1;
     public static final int ZOMBIE_HEALTH = -1; // Symbolic, do not change
+    public static final int TERRAIN_HEALTH = 1;
 
     // Directions that characters can move
     public static final List<Position> DIRECTIONS = Arrays.asList(

@@ -117,15 +117,6 @@ public class GameState implements Cloneable {
         // Decrement attack cooldowns and effects
         applyCooldownAndEffectDecay(player.isZombie());
 
-        // TODO: This is just for testing purposes and should be removed
-        // Randomly pick some bits of terrain to destroy
-        Random rand = new Random();
-        for (int i = 0; i < 10; i++) {
-            TerrainState[] terrainStateValues = terrainStates.values().toArray(TerrainState[]::new);
-            TerrainState toModify = terrainStateValues[rand.nextInt(terrainStateValues.length)];
-            toModify.destroy();
-        }
-
         // Store character diffs
         Map<String, Map<String, JsonNode>> characterStateDiffs = new HashMap<>();
 
@@ -187,7 +178,7 @@ public class GameState implements Cloneable {
             String id = attackAction.getExecutingCharacterId();
             CharacterState executing = characterStates.get(id);
             String attackingId = attackAction.getAttackingId();
-            CharacterState attacking = characterStates.get(attackingId);
+            AttackActionType attackType = attackAction.getType();
 
             // Ignore if they can't use this character
             if (!possibleAttackActions.containsKey(id)) {
@@ -208,25 +199,34 @@ public class GameState implements Cloneable {
                 continue;
             }
 
-            if (executing.isZombie()) {
-                // No attacking zombies as a zombie
-                if (attacking.isZombie()) {
-                    continue;
-                }
-                attacking.setHealth(attacking.getHealth() - 1);
+            if (attackType == AttackActionType.CHARACTER) {
+                // Handle character attacks
+                CharacterState attacking = characterStates.get(attackingId);
+                if (executing.isZombie()) {
+                    // No attacking zombies as a zombie
+                    if (attacking.isZombie()) {
+                        continue;
+                    }
+                    attacking.setHealth(attacking.getHealth() - 1);
 
-                if (attacking.getHealth() == 0) {
-                    attacking.makeZombie();
-                }
-            } else {
-                // No attacking humans as a human
-                if (!attacking.isZombie()) {
-                    continue;
-                }
+                    if (attacking.getHealth() == 0) {
+                        attacking.makeZombie();
+                    }
+                } else {
+                    // No attacking humans as a human
+                    if (!attacking.isZombie()) {
+                        continue;
+                    }
 
-                attacking.stun();
+                    attacking.stun();
 
-                executing.resetAttackCooldownLeft();
+                    executing.resetAttackCooldownLeft();
+                }
+            } else if (attackType == AttackActionType.TERRAIN) {
+                // Handle terrain attacks
+                TerrainState attacking = terrainStates.get(attackingId);
+
+                attacking.attack();
             }
         }
     }
@@ -312,6 +312,7 @@ public class GameState implements Cloneable {
             List<AttackAction> attackActions = new ArrayList<>();
 
             if (characterState.canAttack()) {
+                // Handle attackable enemies
                 for (CharacterState otherCharacterState : characterStates.values()) {
                     // If is on our team, we don't attack them
                     if (otherCharacterState.isZombie() == isZombie) {
@@ -325,6 +326,22 @@ public class GameState implements Cloneable {
 
                     // We can attack them
                     attackActions.add(new AttackAction(characterState.getId(), otherCharacterState.getId(), AttackActionType.CHARACTER));
+                }
+
+                // Handle attackable terrain
+                for (TerrainState terrainState : terrainStates.values()) {
+                    // If the terrain is destroyed or not destroyable, we cannot attack it
+                    if (terrainState.isDestroyed() || !terrainState.isDestroyable()) {
+                        continue;
+                    }
+
+                    // If they are not within attackable range, we cannot attack it
+                    if (!attackable.containsKey(terrainState.getPosition().toString())) {
+                        continue;
+                    }
+
+                    // We can attack them
+                    attackActions.add(new AttackAction(characterState.getId(), terrainState.getId(), AttackActionType.TERRAIN));
                 }
             }
 
