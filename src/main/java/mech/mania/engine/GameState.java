@@ -339,6 +339,11 @@ public class GameState implements Cloneable {
 
                 // Handle attackable terrain
                 for (TerrainState terrainState : terrainStates.values()) {
+                    // If the terrain is destroyed or not destroyable, we cannot attack it
+                    if (terrainState.isDestroyed() || !terrainState.isDestroyable()) {
+                        continue;
+                    }
+
                     // If they are not within attackable range, we cannot attack it
                     if (!attackable.containsKey(terrainState.getPosition().toString())) {
                         continue;
