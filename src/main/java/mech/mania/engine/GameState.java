@@ -187,7 +187,7 @@ public class GameState implements Cloneable {
             String id = attackAction.getExecutingCharacterId();
             CharacterState executing = characterStates.get(id);
             String attackingId = attackAction.getAttackingId();
-            CharacterState attacking = characterStates.get(attackingId);
+            AttackActionType attackType = attackAction.getType();
 
             // Ignore if they can't use this character
             if (!possibleAttackActions.containsKey(id)) {
@@ -208,25 +208,34 @@ public class GameState implements Cloneable {
                 continue;
             }
 
-            if (executing.isZombie()) {
-                // No attacking zombies as a zombie
-                if (attacking.isZombie()) {
-                    continue;
-                }
-                attacking.setHealth(attacking.getHealth() - 1);
+            if (attackType == AttackActionType.CHARACTER) {
+                // Handle character attacks
+                CharacterState attacking = characterStates.get(attackingId);
+                if (executing.isZombie()) {
+                    // No attacking zombies as a zombie
+                    if (attacking.isZombie()) {
+                        continue;
+                    }
+                    attacking.setHealth(attacking.getHealth() - 1);
 
-                if (attacking.getHealth() == 0) {
-                    attacking.makeZombie();
-                }
-            } else {
-                // No attacking humans as a human
-                if (!attacking.isZombie()) {
-                    continue;
-                }
+                    if (attacking.getHealth() == 0) {
+                        attacking.makeZombie();
+                    }
+                } else {
+                    // No attacking humans as a human
+                    if (!attacking.isZombie()) {
+                        continue;
+                    }
 
-                attacking.stun();
+                    attacking.stun();
 
-                executing.resetAttackCooldownLeft();
+                    executing.resetAttackCooldownLeft();
+                }
+            } else if (attackType == AttackActionType.TERRAIN) {
+                // Handle terrain attacks
+                TerrainState attacking = terrainStates.get(attackingId);
+
+                attacking.attack();
             }
         }
     }

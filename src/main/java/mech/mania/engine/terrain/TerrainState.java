@@ -9,17 +9,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static mech.mania.engine.Config.DIFF_MODE_ENABLED;
+import static mech.mania.engine.Config.TERRAIN_HEALTH;
 
 public class TerrainState implements Cloneable, Diffable {
     private final String id;
     private final String imageId;
     private final Position position;
+    private int health;
     private boolean destroyed;
 
     public TerrainState(String id, String imageId, Position position) {
         this.id = id;
         this.imageId = imageId;
         this.position = position;
+        this.health = TERRAIN_HEALTH;
         this.destroyed = false;
     }
 
@@ -35,12 +38,22 @@ public class TerrainState implements Cloneable, Diffable {
         return position;
     }
 
-    public boolean isDestroyed() {
-        return destroyed;
+    public void attack() {
+        if (this.health > 0) {
+            this.health -= 1;
+
+            if (this.health == 0) {
+                this.destroyed = true;
+            }
+        }
     }
 
-    public void destroy() {
-        destroyed = true;
+    public boolean isDestroyable() {
+        return this.health >= 0;
+    }
+
+    public boolean isDestroyed() {
+        return destroyed;
     }
 
     @Override
@@ -71,6 +84,10 @@ public class TerrainState implements Cloneable, Diffable {
 
         if (previousTerrainState == null || imageId != previousTerrainState.imageId || !DIFF_MODE_ENABLED) {
             diff.put("imageId", mapper.valueToTree(imageId));
+        }
+
+        if (previousTerrainState == null || health != previousTerrainState.health || !DIFF_MODE_ENABLED) {
+            diff.put("health", mapper.valueToTree(health));
         }
 
         if (previousTerrainState == null || destroyed != previousTerrainState.destroyed || !DIFF_MODE_ENABLED) {
