@@ -312,6 +312,7 @@ public class GameState implements Cloneable {
             List<AttackAction> attackActions = new ArrayList<>();
 
             if (characterState.canAttack()) {
+                // Handle attackable enemies
                 for (CharacterState otherCharacterState : characterStates.values()) {
                     // If is on our team, we don't attack them
                     if (otherCharacterState.isZombie() == isZombie) {
@@ -325,6 +326,17 @@ public class GameState implements Cloneable {
 
                     // We can attack them
                     attackActions.add(new AttackAction(characterState.getId(), otherCharacterState.getId(), AttackActionType.CHARACTER));
+                }
+
+                // Handle attackable terrain
+                for (TerrainState terrainState : terrainStates.values()) {
+                    // If they are not within attackable range, we cannot attack it
+                    if (!attackable.containsKey(terrainState.getPosition().toString())) {
+                        continue;
+                    }
+
+                    // We can attack them
+                    attackActions.add(new AttackAction(characterState.getId(), terrainState.getId(), AttackActionType.TERRAIN));
                 }
             }
 
