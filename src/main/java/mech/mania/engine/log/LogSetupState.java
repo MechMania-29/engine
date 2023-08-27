@@ -11,7 +11,7 @@ public class LogSetupState {
     private final boolean diffModeEnabled;
     @JsonProperty("boardSize")
     private final int boardSize;
-    @JsonProperty("turns")
+    @JsonProperty("maxTurns")
     private final int turns;
     @JsonProperty("totalCharacters")
     private final int totalCharacters;
