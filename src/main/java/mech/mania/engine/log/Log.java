@@ -13,11 +13,15 @@ import java.util.Map;
 public class Log {
     @JsonProperty("setup")
     private LogSetupState setupState;
+    @JsonProperty("scores")
+    private LogScores scores;
+    @JsonProperty("stats")
+    private LogStats stats;
     @JsonProperty("turns")
     private List<LogTurnState> turnStates;
 
-    public Log(LogSetupState setupState) {
-        this.setupState = setupState;
+    public Log() {
+        this.setupState = new LogSetupState();
         this.turnStates = new ArrayList<>();
     }
 
@@ -27,6 +31,11 @@ public class Log {
         LogTurnState turnState = new LogTurnState(turn, characterStateDiffs, terrainStateDiffs);
 
         turnStates.add(turnState);
+    }
+
+    public void storeResults(LogScores scores, LogStats stats) {
+        this.scores = scores;
+        this.stats = stats;
     }
 
     @Override

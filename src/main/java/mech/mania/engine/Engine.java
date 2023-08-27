@@ -1,5 +1,7 @@
 package mech.mania.engine;
 
+import mech.mania.engine.log.LogScores;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -47,14 +49,20 @@ public class Engine {
 
         GameState gameState = new GameState();
 
-        System.out.println("Starting...");
+        System.out.println("Running game...");
 
         printState(gameState, id);
 
-        while (gameState.getTurn() < TURNS) {
+        while (!gameState.isFinished()) {
             gameState.runTurn();
             printState(gameState, id);
         }
+
+        LogScores finalScores = gameState.getScores();
+
+        System.out.printf("Game finished on turn %d with %d humans and %d zombies, %d-%d (H-Z)\n",
+                gameState.getTurn(), gameState.getHumansCount(), gameState.getZombiesCount(),
+                finalScores.humans(), finalScores.zombies());
 
         String output = System.getenv("OUTPUT") == null ?
                 "gamelogs/game_" + id + ".json" :

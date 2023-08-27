@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import mech.mania.engine.character.CharacterState;
 import mech.mania.engine.character.action.AttackAction;
 import mech.mania.engine.character.action.AttackActionType;
+import mech.mania.engine.log.LogScores;
+import mech.mania.engine.log.LogStats;
 import mech.mania.engine.terrain.TerrainData;
 import mech.mania.engine.terrain.TerrainState;
 import mech.mania.engine.util.Position;
@@ -25,7 +27,7 @@ public class GameState {
     private final Player zombiePlayer;
 
     public GameState() {
-        log = new Log(new LogSetupState());
+        log = new Log();
         turn = 0;
         characterStates = new HashMap<>();
         terrainStates = new HashMap<>();
@@ -154,6 +156,40 @@ public class GameState {
         }
 
         log.storeDiffs(characterStateDiffs, terrainStateDiffs);
+
+        if (isFinished()) {
+            log.storeResults(getScores(), getStats());
+        }
+    }
+
+    public int getZombiesCount() {
+        return (int) characterStates.values().stream().filter(CharacterState::isZombie).count();
+    }
+    public int getHumansCount() {
+        return (int) characterStates.values().stream().filter(characterState -> !characterState.isZombie()).count();
+    }
+
+    public boolean isFinished() {
+        if (getHumansCount() <= 0) {
+            return true;
+        }
+
+        return turn >= TURNS;
+    }
+
+    public LogScores getScores() {
+        int zombiesCount = getZombiesCount();
+        int humansCount = getHumansCount();
+        int humansInfected = zombiesCount - STARTING_ZOMBIES;
+        int SCALE_FACTOR = 5;
+        int humansScore = turn + (humansCount * SCALE_FACTOR);
+        int zombiesScore = TURNS - turn + (humansInfected * SCALE_FACTOR);
+
+        return new LogScores(humansScore, zombiesScore);
+    }
+
+    private LogStats getStats() {
+        return new LogStats(turn, getHumansCount(), getZombiesCount());
     }
 
     private void applyClearActions(Map<String, CharacterState> characterStates) {
