@@ -2,6 +2,7 @@ package mech.mania.engine.character;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import mech.mania.engine.character.action.AttackAction;
 import mech.mania.engine.util.Diffable;
 import mech.mania.engine.util.Position;
 
@@ -21,6 +22,8 @@ public class CharacterState implements Cloneable, Diffable {
     private int attackCooldown;
     private int attackCooldownLeft = 0;
     private int stunnedEffectLeft = 0;
+
+    private AttackAction attackAction;
 
     public CharacterState(String id, Position position, boolean isZombie) {
         this.id = id;
@@ -60,6 +63,10 @@ public class CharacterState implements Cloneable, Diffable {
         return stunnedEffectLeft == 0;
     }
 
+    protected boolean isStunned() {
+        return stunnedEffectLeft == 0;
+    }
+
     public boolean canAttack() {
         return attackCooldownLeft == 0 && stunnedEffectLeft == 0;
     }
@@ -96,6 +103,14 @@ public class CharacterState implements Cloneable, Diffable {
         if (this.stunnedEffectLeft > 0) {
             this.stunnedEffectLeft -= 1;
         }
+    }
+
+    public void clearActions() {
+        this.attackAction = null;
+    }
+
+    public void setAttackAction(AttackAction attackAction) {
+        this.attackAction = attackAction;
     }
 
     @Override
@@ -139,6 +154,14 @@ public class CharacterState implements Cloneable, Diffable {
 
         if (previousCharacterState == null || health != previousCharacterState.health || !DIFF_MODE_ENABLED) {
             diff.put("health", mapper.valueToTree(health));
+        }
+
+        if (previousCharacterState == null || isStunned() != previousCharacterState.isStunned() || !DIFF_MODE_ENABLED) {
+            diff.put("isStunned", mapper.valueToTree(isStunned()));
+        }
+
+        if (previousCharacterState == null || attackAction != previousCharacterState.attackAction || !DIFF_MODE_ENABLED) {
+            diff.put("attackAction", mapper.valueToTree(attackAction));
         }
 
         if (diff.isEmpty()) {

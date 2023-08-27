@@ -104,6 +104,9 @@ public class GameState implements Cloneable {
         Map<String, Map<String, Position>> possibleMoves = getPossibleMovePositions(player.isZombie());
         List<MoveAction> moveActions = player.getMoveInput(possibleMoves, characterStates);
 
+        // Reset existing stored actions
+        applyClearActions(characterStates);
+
         // Apply move actions
         applyMoveActions(moveActions, possibleMoves);
 
@@ -150,6 +153,10 @@ public class GameState implements Cloneable {
         }
 
         log.storeDiffs(characterStateDiffs, terrainStateDiffs);
+    }
+
+    private void applyClearActions(Map<String, CharacterState> characterStates) {
+        characterStates.values().forEach(CharacterState::clearActions);
     }
 
     private void applyMoveActions(List<MoveAction> moveActions, Map<String, Map<String, Position>> possibleMoves) {
@@ -219,8 +226,6 @@ public class GameState implements Cloneable {
                     }
 
                     attacking.stun();
-
-                    executing.resetAttackCooldownLeft();
                 }
             } else if (attackType == AttackActionType.TERRAIN) {
                 // Handle terrain attacks
@@ -228,6 +233,8 @@ public class GameState implements Cloneable {
 
                 attacking.attack();
             }
+            executing.setAttackAction(attackAction);
+            executing.resetAttackCooldownLeft();
         }
     }
 
