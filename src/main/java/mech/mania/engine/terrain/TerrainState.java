@@ -9,20 +9,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static mech.mania.engine.Config.DIFF_MODE_ENABLED;
-import static mech.mania.engine.Config.TERRAIN_HEALTH;
 
 public class TerrainState implements Cloneable, Diffable {
     private final String id;
     private final String imageId;
     private final Position position;
     private int health;
+    private boolean canAttackThrough;
     private boolean destroyed;
 
-    public TerrainState(String id, String imageId, Position position) {
+    public TerrainState(String id, TerrainData data, Position position) {
         this.id = id;
-        this.imageId = imageId;
+        this.imageId = data.imageId();
         this.position = position;
-        this.health = TERRAIN_HEALTH;
+        this.health = data.health();
+        this.canAttackThrough = data.canShootThrough();
         this.destroyed = false;
     }
 
@@ -50,6 +51,10 @@ public class TerrainState implements Cloneable, Diffable {
 
     public boolean isDestroyable() {
         return this.health >= 0;
+    }
+
+    public boolean canAttackThrough() {
+        return canAttackThrough;
     }
 
     public boolean isDestroyed() {

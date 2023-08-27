@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import mech.mania.engine.character.CharacterState;
 import mech.mania.engine.character.action.AttackAction;
 import mech.mania.engine.character.action.AttackActionType;
+import mech.mania.engine.terrain.TerrainData;
 import mech.mania.engine.terrain.TerrainState;
 import mech.mania.engine.util.Position;
 import mech.mania.engine.character.action.MoveAction;
@@ -15,7 +16,7 @@ import java.util.*;
 
 import static mech.mania.engine.Config.*;
 
-public class GameState implements Cloneable {
+public class GameState {
     private Log log;
     private int turn;
     private final Map<String, CharacterState> characterStates;
@@ -54,9 +55,9 @@ public class GameState implements Cloneable {
         for (int i = 0; i < 500; i++) {
             String id = Integer.toString(i);
             Position position = new Position(rand.nextInt(0, BOARD_SIZE), rand.nextInt(0, BOARD_SIZE));
-            String imageId = TERRAIN_IMAGE_IDS.get(rand.nextInt(TERRAIN_IMAGE_IDS.size()));
+            TerrainData terrainData = TERRAIN_DATAS.get(rand.nextInt(TERRAIN_DATAS.size()));
 
-            TerrainState terrainState = new TerrainState(id, imageId, position);
+            TerrainState terrainState = new TerrainState(id, terrainData, position);
             terrainStates.put(id, terrainState);
 
             Map<String, JsonNode> diff = terrainState.diff(null);
@@ -238,7 +239,7 @@ public class GameState implements Cloneable {
         }
     }
 
-    private Map<String, Position> getTilesInRange(Position start, int range) {
+    private Map<String, Position> getTilesInRange(Position start, int range, boolean isAttack) {
         Map<String, Position> moves = new HashMap<>();
 
         if (range <= 0) {
@@ -257,7 +258,22 @@ public class GameState implements Cloneable {
             }
 
             // Check not terrain
-            if (terrainStates.containsKey(key) && !terrainStates.get(key).isDestroyed()) {
+            boolean canTraverseThrough = true;
+
+            boolean exists = terrainStates.containsKey(key);
+            if (exists) {
+                canTraverseThrough = false;
+                TerrainState terrainState = terrainStates.get(key);
+                if (terrainState.isDestroyed()) {
+                    canTraverseThrough = true;
+                }
+
+                if (isAttack && terrainState.canAttackThrough()) {
+                    canTraverseThrough = true;
+                }
+            }
+
+            if (!canTraverseThrough) {
                 continue;
             }
 
@@ -267,7 +283,7 @@ public class GameState implements Cloneable {
             }
 
             // Recursively check for next moves
-            Map<String, Position> fromThere = getTilesInRange(newPosition, range - 1);
+            Map<String, Position> fromThere = getTilesInRange(newPosition, range - 1, isAttack);
 
             fromThere.forEach((fromThereKey, fromThereNewPosition) -> {
                 if (!moves.containsKey(fromThereKey)) {
@@ -294,7 +310,7 @@ public class GameState implements Cloneable {
 
         for (CharacterState characterState : controllableCharacterStates.values()) {
             int range = characterState.canMove() ? characterState.getMoveSpeed() : 0;
-            Map<String, Position> moves = getTilesInRange(characterState.getPosition(), range);
+            Map<String, Position> moves = getTilesInRange(characterState.getPosition(), range, false);
 
             possibleMoves.put(characterState.getId(), moves);
         }
@@ -315,7 +331,7 @@ public class GameState implements Cloneable {
         Map<String, List<AttackAction>> possibleAttackActions = new HashMap<>();
 
         for (CharacterState characterState : controllableCharacterStates.values()) {
-            Map<String, Position> attackable = getTilesInRange(characterState.getPosition(), characterState.getAttackRange());
+            Map<String, Position> attackable = getTilesInRange(characterState.getPosition(), characterState.getAttackRange(), true);
             List<AttackAction> attackActions = new ArrayList<>();
 
             if (characterState.canAttack()) {

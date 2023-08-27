@@ -1,5 +1,6 @@
 package mech.mania.engine;
 
+import mech.mania.engine.terrain.TerrainData;
 import mech.mania.engine.util.Position;
 
 import java.io.Serializable;
@@ -48,9 +49,10 @@ public class Config implements Serializable {
     );
 
     // These are the various ids for terrain. Likely will need to be updated.
-    public static final List<String> TERRAIN_IMAGE_IDS = Arrays.asList(
-            "rock",
-            "tree",
-            "building"
+    public static final List<TerrainData> TERRAIN_DATAS = Arrays.asList(
+            new TerrainData("wall", false, 3),
+            new TerrainData("barricade", true, 1),
+            new TerrainData("tree", false, 2),
+            new TerrainData("river", true, -1) // -1 makes invincible
     );
 }
