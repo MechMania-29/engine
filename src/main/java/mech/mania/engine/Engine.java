@@ -9,16 +9,19 @@ import java.time.format.DateTimeFormatter;
 import static mech.mania.engine.Config.TURNS;
 
 public class Engine {
-    private static void printState(GameState gameState, String id) {
-        System.out.println(gameState);
-
+    private static boolean isDebug() {
         String debug = System.getenv("DEBUG");
-        if (debug != null && !debug.equals("1") && !debug.equals("true")) {
+        return debug != null && (debug.equals("1") || debug.equals("true"));
+    }
+    private static void printState(GameState gameState, String id) {
+        if (!isDebug()) {
             return;
         }
 
-        String output = "debuglog/game_" + id + "/turn_" + gameState.getTurn() + ".txt";
+        System.out.printf("Running turn %d...%n", gameState.getTurn());
+        System.out.println(gameState);
 
+        String output = "debuglog/game_" + id + "/turn_" + gameState.getTurn() + ".txt";
 
         File file = new File(output);
         try {
@@ -44,6 +47,8 @@ public class Engine {
 
         GameState gameState = new GameState();
 
+        System.out.println("Starting...");
+
         printState(gameState, id);
 
         while (gameState.getTurn() < TURNS) {
@@ -51,16 +56,18 @@ public class Engine {
             printState(gameState, id);
         }
 
-        String output = System.getenv("output") == null ?
+        String output = System.getenv("OUTPUT") == null ?
                 "gamelogs/game_" + id + ".json" :
-                System.getenv("output");
+                System.getenv("OUTPUT");
+
+        System.out.printf("Writing to `%s`...%n", output);
 
 
         File file = new File(output);
         try {
             file.getParentFile().mkdirs();
         } catch (NullPointerException e) {
-            throw new RuntimeException(e);
+            // If failed, we are already good
         }
 
         PrintWriter printWriter = null;
@@ -74,5 +81,6 @@ public class Engine {
         } finally {
             printWriter.close();
         }
+        System.out.println("Finished");
     }
 }
