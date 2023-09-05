@@ -1,5 +1,6 @@
 package mech.mania.engine.terrain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import mech.mania.engine.util.Diffable;
@@ -14,7 +15,9 @@ public class TerrainState implements Cloneable, Diffable {
     private final String id;
     private final String imageId;
     private final Position position;
+    @JsonProperty("health")
     private int health;
+    @JsonProperty("canAttackThrough")
     private boolean canAttackThrough;
     private boolean destroyed;
 

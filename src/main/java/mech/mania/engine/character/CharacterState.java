@@ -1,5 +1,6 @@
 package mech.mania.engine.character;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import mech.mania.engine.character.action.AttackAction;
@@ -63,7 +64,7 @@ public class CharacterState implements Cloneable, Diffable {
         return stunnedEffectLeft == 0;
     }
 
-    protected boolean isStunned() {
+    public boolean isStunned() {
         return stunnedEffectLeft == 0;
     }
 

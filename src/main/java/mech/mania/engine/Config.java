@@ -55,4 +55,8 @@ public class Config implements Serializable {
             new TerrainData("tree", false, 2),
             new TerrainData("river", true, -1) // -1 makes invincible
     );
+
+    // Networking
+    public static final int TIMEOUT_MILIS_INIT = 15 * 1000; // The timeout for initial connection
+    public static final int TIMEOUT_MILIS_TURN = 2500; // The timout for each turn response
 }

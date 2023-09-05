@@ -1,16 +1,21 @@
 package mech.mania.engine.character;
 
 import mech.mania.engine.GameState;
+import mech.mania.engine.player.Player;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
 
 import static mech.mania.engine.Config.STARTING_ZOMBIES;
 import static mech.mania.engine.Config.TOTAL_CHARACTERS;
 
 public class GameStateTest {
     @Test
-    public void BaseTest() {
-        GameState gameState = new GameState();
+    public void BaseTest() throws IOException {
+        Player human = new Player(0, false);
+        Player zombie = new Player(0, true);
+        GameState gameState = new GameState(human, zombie);
 
         int zombiesCount = 0;
         int humansCounts = 0;

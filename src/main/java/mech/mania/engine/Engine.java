@@ -1,16 +1,24 @@
 package mech.mania.engine;
 
 import mech.mania.engine.log.LogScores;
+import mech.mania.engine.log.LogStats;
+import mech.mania.engine.player.Player;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import static mech.mania.engine.Config.TURNS;
-
 public class Engine {
+    private static final String USAGE = """
+            Usage: java -jar engine.jar [PORT_1] [PORT_2]\s
+
+            Env variables:
+            OUTPUT = The location to which the gamelog will be output, defaults to gamelogs/game_DATE.json
+            DEBUG = Set to 1 to enable debug output and debuglog output
+            """;
     private static boolean isDebug() {
         String debug = System.getenv("DEBUG");
         return debug != null && (debug.equals("1") || debug.equals("true"));
@@ -44,13 +52,34 @@ public class Engine {
             printWriter.close();
         }
     }
-    public static void main(String[] args) {
-        String id = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss").format(LocalDateTime.now());
+    public static void main(String[] args) throws IOException {
+        if (args.length != 2) {
+            System.err.println("No arguments specified");
+            System.out.println(USAGE);
+            System.exit(1);
+            return;
+        }
 
-        GameState gameState = new GameState();
+        int port1, port2;
+
+        try {
+            port1 = Integer.parseInt(args[0]);
+            port2 = Integer.parseInt(args[1]);
+        } catch (NumberFormatException e) {
+            System.err.println("Port numbers must be integers.");
+            System.err.println(USAGE);
+            System.exit(1);
+            return;
+        }
+
+        Player humanPlayer = new Player(port1, false);
+        Player zombiePlayer = new Player(port2, true);
+
+        GameState gameState = new GameState(humanPlayer, zombiePlayer);
 
         System.out.println("Running game...");
 
+        String id = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss").format(LocalDateTime.now());
         printState(gameState, id);
 
         while (!gameState.isFinished()) {
@@ -59,9 +88,13 @@ public class Engine {
         }
 
         LogScores finalScores = gameState.getScores();
+        LogStats finalStats = new LogStats(gameState.getTurn(), gameState.getHumansCount(), gameState.getZombiesCount());
+
+        humanPlayer.finish(finalScores, finalStats);
+        zombiePlayer.finish(finalScores, finalStats);
 
         System.out.printf("Game finished on turn %d with %d humans and %d zombies, %d-%d (H-Z)\n",
-                gameState.getTurn(), gameState.getHumansCount(), gameState.getZombiesCount(),
+                gameState.getTurn(), finalStats.humansLeft(), finalStats.zombiesLeft(),
                 finalScores.humans(), finalScores.zombies());
 
         String output = System.getenv("OUTPUT") == null ?
