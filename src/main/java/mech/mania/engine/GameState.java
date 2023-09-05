@@ -6,15 +6,17 @@ import mech.mania.engine.character.action.AttackAction;
 import mech.mania.engine.character.action.AttackActionType;
 import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
+import mech.mania.engine.player.AttackInput;
+import mech.mania.engine.player.MoveInput;
 import mech.mania.engine.terrain.TerrainData;
 import mech.mania.engine.terrain.TerrainState;
 import mech.mania.engine.util.Position;
 import mech.mania.engine.character.action.MoveAction;
 import mech.mania.engine.log.Log;
-import mech.mania.engine.log.LogSetupState;
 import mech.mania.engine.player.Player;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static mech.mania.engine.Config.*;
 
@@ -26,7 +28,7 @@ public class GameState {
     private final Player humanPlayer;
     private final Player zombiePlayer;
 
-    public GameState() {
+    public GameState(Player human, Player zombie) {
         log = new Log();
         turn = 0;
         characterStates = new HashMap<>();
@@ -68,8 +70,8 @@ public class GameState {
 
         log.storeDiffs(characterStateDiffs, terrainStateDiffs);
 
-        humanPlayer = new Player(-1, true, false);
-        zombiePlayer = new Player(-1, true, true);
+        this.humanPlayer = human;
+        this.zombiePlayer = zombie;
     };
 
     public Map<String, CharacterState> getCharacterStates() {
@@ -104,18 +106,22 @@ public class GameState {
         Player player = (turn % 2 == 1) ? zombiePlayer : humanPlayer;
 
         // Get player move input
-        Map<String, Map<String, Position>> possibleMoves = getPossibleMovePositions(player.isZombie());
-        List<MoveAction> moveActions = player.getMoveInput(possibleMoves, characterStates);
+        Map<String, List<MoveAction>> possibleMoveActions = getPossibleMoveActions(player.isZombie());
+        List<MoveAction> moveActions = player.getMoveInput(
+                new MoveInput(possibleMoveActions, turn, characterStates, terrainStates)
+        );
 
         // Reset existing stored actions
         applyClearActions(characterStates);
 
         // Apply move actions
-        applyMoveActions(moveActions, possibleMoves);
+        applyMoveActions(moveActions, possibleMoveActions);
 
         // Get player attack input
         Map<String, List<AttackAction>> possibleAttackActions = getPossibleAttackActions(player.isZombie());
-        List<AttackAction> attackActions = player.getAttackInput(possibleAttackActions);
+        List<AttackAction> attackActions = player.getAttackInput(
+                new AttackInput(possibleAttackActions, turn, characterStates, terrainStates)
+        );
 
         // Apply attack actions
         applyAttackActions(attackActions, possibleAttackActions);
@@ -196,53 +202,69 @@ public class GameState {
         characterStates.values().forEach(CharacterState::clearActions);
     }
 
-    private void applyMoveActions(List<MoveAction> moveActions, Map<String, Map<String, Position>> possibleMoves) {
-        for (MoveAction moveAction : moveActions) {
-            String id = moveAction.getExecutingCharacterId();
-            Position destination = moveAction.getDestination();
-            String destinationKey = destination.toString();
+    private void applyMoveActions(List<MoveAction> moveActions, Map<String, List<MoveAction>> possibleMoveActions) {
+        for (String id : possibleMoveActions.keySet()) {
+            List<MoveAction> possibleMoves = possibleMoveActions.get(id);
+            List<MoveAction> attemptedMoves = moveActions.stream()
+                    .filter(moveAction -> moveAction.getExecutingCharacterId().equals(id))
+                    .toList();
 
-            // Ignore if they can't move this character
-            if (!possibleMoves.containsKey(id)) {
+            if (attemptedMoves.isEmpty()) {
                 continue;
             }
 
-            // Ignore if it's not a possible move
-            Map<String, Position> possibleMovesForThisCharacter = possibleMoves.get(id);
-            if (!possibleMovesForThisCharacter.containsKey(destinationKey)) {
-                continue;
-            }
+            // Only register the first move
+            MoveAction moveAction = attemptedMoves.get(0);
 
-            // Apply move action
-            characterStates.get(id).setPosition(destination);
-        }
-    }
-    private void applyAttackActions(List<AttackAction> attackActions, Map<String, List<AttackAction>> possibleAttackActions) {
-        for (AttackAction attackAction : attackActions) {
-            String id = attackAction.getExecutingCharacterId();
-            CharacterState executing = characterStates.get(id);
-            String attackingId = attackAction.getAttackingId();
-            AttackActionType attackType = attackAction.getType();
-
-            // Ignore if they can't use this character
-            if (!possibleAttackActions.containsKey(id)) {
-                continue;
-            }
-
-            // Ignore if it's not a possible move
-            boolean isPossible = false;
-
-            for (AttackAction possible : possibleAttackActions.get(id)) {
-                if (attackAction == possible) {
-                    isPossible = true;
+            // Check if possible
+            boolean possible = false;
+            for (MoveAction possibleMove : possibleMoves) {
+                if (moveAction.getDestination() == possibleMove.getDestination()) {
+                    possible = true;
                     break;
                 }
             }
 
-            if (!isPossible) {
+            if (!possible) {
                 continue;
             }
 
+
+            // Apply move action
+            characterStates.get(id).setPosition(moveAction.getDestination());
+        }
+    }
+    private void applyAttackActions(List<AttackAction> attackActions, Map<String, List<AttackAction>> possibleAttackActions) {
+        for (String id : possibleAttackActions.keySet()) {
+            List<AttackAction> possibleAttacks = possibleAttackActions.get(id);
+            List<AttackAction> attemptedMoves = possibleAttacks.stream()
+                    .filter(moveAction -> moveAction.getExecutingCharacterId().equals(id))
+                    .toList();
+
+            if (attemptedMoves.isEmpty()) {
+                continue;
+            }
+
+            // Only register the first action
+            AttackAction attackAction = attemptedMoves.get(0);
+
+            // Check if possible
+            boolean possible = false;
+            for (AttackAction possibleMove : possibleAttacks) {
+                if (attackAction.equals(possibleMove)) {
+                    possible = true;
+                    break;
+                }
+            }
+
+            if (!possible) {
+                continue;
+            }
+
+            // Apply attack action
+            AttackActionType attackType = attackAction.getType();
+            CharacterState executing = characterStates.get(id);
+            String attackingId = attackAction.getAttackingId();
             if (attackType == AttackActionType.CHARACTER) {
                 // Handle character attacks
                 CharacterState attacking = characterStates.get(attackingId);
@@ -331,7 +353,7 @@ public class GameState {
         return moves;
     }
 
-    private Map<String, Map<String, Position>> getPossibleMovePositions(boolean isZombie) {
+    private Map<String, List<MoveAction>> getPossibleMoveActions(boolean isZombie) {
         // Get controllable character states
         Map<String, CharacterState> controllableCharacterStates = new HashMap<>();
 
@@ -342,16 +364,20 @@ public class GameState {
         }
 
         // Get possible moves for each character
-        Map<String, Map<String, Position>> possibleMoves = new HashMap<>();
+        Map<String, List<MoveAction>> possibleActions = new HashMap<>();
 
         for (CharacterState characterState : controllableCharacterStates.values()) {
             int range = characterState.canMove() ? characterState.getMoveSpeed() : 0;
             Map<String, Position> moves = getTilesInRange(characterState.getPosition(), range, false);
 
-            possibleMoves.put(characterState.getId(), moves);
+            possibleActions.put(characterState.getId(),
+                    moves.values().stream()
+                            .map(position -> new MoveAction(characterState.getId(), position))
+                            .collect(Collectors.toList())
+            );
         }
 
-        return possibleMoves;
+        return possibleActions;
     }
     private Map<String, List<AttackAction>> getPossibleAttackActions(boolean isZombie) {
         // Get controllable character states
