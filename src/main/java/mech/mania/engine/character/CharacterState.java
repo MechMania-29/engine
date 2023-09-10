@@ -1,13 +1,14 @@
 package mech.mania.engine.character;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import mech.mania.engine.character.action.AbilityAction;
 import mech.mania.engine.character.action.AttackAction;
 import mech.mania.engine.util.Diffable;
 import mech.mania.engine.util.Position;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static mech.mania.engine.Config.*;
@@ -17,23 +18,24 @@ public class CharacterState implements Cloneable, Diffable {
     private final String id;
     private Position position;
     private boolean isZombie;
+    private CharacterClassType classType;
+    private List<CharacterClassAbility> abilities;
     private int health;
     private int moveSpeed;
     private int attackRange;
     private int attackCooldown;
     private int attackCooldownLeft = 0;
+    private int abilityCooldownLeft = 0;
     private int stunnedEffectLeft = 0;
 
     private AttackAction attackAction;
+    private AbilityAction abilityAction;
 
-    public CharacterState(String id, Position position, boolean isZombie) {
+    public CharacterState(String id, Position position, boolean isZombie, CharacterClassType classType) {
         this.id = id;
         this.position = position;
         this.isZombie = isZombie;
-        this.health = isZombie ? ZOMBIE_HEALTH : HUMAN_HEALTH;
-        this.moveSpeed = isZombie ? ZOMBIE_MOVE_SPEED : HUMAN_MOVE_SPEED;
-        this.attackRange = isZombie ? ZOMBIE_ATTACK_RANGE : HUMAN_ATTACK_RANGE;
-        this.attackCooldown = isZombie ? ZOMBIE_ATTACK_COOLDOWN : HUMAN_ATTACK_COOLDOWN;
+        applyClass(classType);
     }
 
     public String getId() {
@@ -48,6 +50,10 @@ public class CharacterState implements Cloneable, Diffable {
         return isZombie;
     }
 
+    public List<CharacterClassAbility> getAbilities() {
+        return abilities;
+    }
+
     public int getMoveSpeed() {
         return moveSpeed;
     }
@@ -60,27 +66,45 @@ public class CharacterState implements Cloneable, Diffable {
         return attackRange;
     }
 
-    public boolean canMove() {
-        return stunnedEffectLeft == 0;
+    public boolean isStunned() {
+        return stunnedEffectLeft > 0;
     }
 
-    public boolean isStunned() {
-        return stunnedEffectLeft == 0;
+    public boolean canMove() {
+        return !isStunned();
     }
 
     public boolean canAttack() {
-        return attackCooldownLeft == 0 && stunnedEffectLeft == 0;
+        return attackCooldownLeft == 0 && !isStunned();
+    }
+
+    public boolean canAbility() {
+        return abilityCooldownLeft == 0 && !isStunned();
     }
 
     public void setPosition(Position position) {
         this.position = position;
     }
 
+    private void applyClass(CharacterClassType classType) {
+        this.classType = classType;
+
+        CharacterClassData classData = CLASSES.get(classType);
+
+        if (classData == null) {
+            throw new RuntimeException(String.format("Invalid classType '%s'", classType.toString()));
+        }
+
+        this.health = classData.health();
+        this.moveSpeed = classData.moveSpeed();
+        this.attackRange = classData.attackRange();
+        this.attackCooldown = classData.attackCooldown();
+        this.abilities = classData.abilities();
+    }
+
     public void makeZombie() {
         isZombie = true;
-        moveSpeed = ZOMBIE_MOVE_SPEED;
-        attackRange = ZOMBIE_ATTACK_RANGE;
-        health = ZOMBIE_HEALTH;
+        applyClass(CharacterClassType.ZOMBIE);
     }
 
     public void setHealth(int health) {
@@ -92,13 +116,23 @@ public class CharacterState implements Cloneable, Diffable {
         this.attackCooldownLeft = this.attackCooldown + 1;
     }
 
+    public void resetAbilityCooldownLeft() {
+        // This is +1 because the reset is immediately decremented at the end of the turn
+        this.abilityCooldownLeft = ABILITY_COOLDOWN + 1;
+    }
+
     public void stun() {
-        this.stunnedEffectLeft = STUNNED_DURATION;
+        // This is +1 because the reset is immediately decremented at the end of the turn
+        this.stunnedEffectLeft = STUNNED_DURATION + 1;
     }
 
     public void applyCooldownAndEffectDecay() {
         if (this.attackCooldownLeft > 0) {
             this.attackCooldownLeft -= 1;
+        }
+
+        if (this.abilityCooldownLeft > 0) {
+            this.abilityCooldownLeft -= 1;
         }
 
         if (this.stunnedEffectLeft > 0) {
@@ -108,10 +142,15 @@ public class CharacterState implements Cloneable, Diffable {
 
     public void clearActions() {
         this.attackAction = null;
+        this.abilityAction = null;
     }
 
     public void setAttackAction(AttackAction attackAction) {
         this.attackAction = attackAction;
+    }
+
+    public void setAbilityAction(AbilityAction abilityAction) {
+        this.abilityAction = abilityAction;
     }
 
     @Override
@@ -153,6 +192,10 @@ public class CharacterState implements Cloneable, Diffable {
             diff.put("isZombie", mapper.valueToTree(isZombie));
         }
 
+        if (previousCharacterState == null || classType != previousCharacterState.classType || !DIFF_MODE_ENABLED) {
+            diff.put("class", mapper.valueToTree(classType));
+        }
+
         if (previousCharacterState == null || health != previousCharacterState.health || !DIFF_MODE_ENABLED) {
             diff.put("health", mapper.valueToTree(health));
         }
@@ -163,6 +206,10 @@ public class CharacterState implements Cloneable, Diffable {
 
         if (previousCharacterState == null || attackAction != previousCharacterState.attackAction || !DIFF_MODE_ENABLED) {
             diff.put("attackAction", mapper.valueToTree(attackAction));
+        }
+
+        if (previousCharacterState == null || abilityAction != previousCharacterState.abilityAction || !DIFF_MODE_ENABLED) {
+            diff.put("abilityAction", mapper.valueToTree(abilityAction));
         }
 
         if (diff.isEmpty()) {

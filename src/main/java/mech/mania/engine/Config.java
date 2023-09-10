@@ -1,6 +1,10 @@
 package mech.mania.engine;
 
+import mech.mania.engine.character.CharacterClassData;
+import mech.mania.engine.character.CharacterClassAbility;
+import mech.mania.engine.character.CharacterClassType;
 import mech.mania.engine.terrain.TerrainData;
+import mech.mania.engine.terrain.TerrainType;
 import mech.mania.engine.util.Position;
 
 import java.io.Serializable;
@@ -20,25 +24,48 @@ public class Config implements Serializable {
     // The number of those that start as zombies
     public static final int STARTING_ZOMBIES = 5;
 
-    // Default move speeds for humans and zombies
-    public static final int HUMAN_MOVE_SPEED = 3;
-    public static final int ZOMBIE_MOVE_SPEED = 5;
+    // Classes
+    public static final Map<CharacterClassType, CharacterClassData> CLASSES = Map.of(
+            CharacterClassType.NORMAL, new CharacterClassData(
+                    1, 3, 4, 3,
+                    List.of()
+            ),
+            CharacterClassType.ZOMBIE, new CharacterClassData(
+                    -1, 5, 1, 0, // Zombie health of -1 symbolically means infinite health
+                    List.of()
+            ),
+            CharacterClassType.MARKSMAN, new CharacterClassData(
+                    1, 3, 6, 3,
+                    List.of()
+            ),
+            CharacterClassType.TRACEUR, new CharacterClassData(
+                    1, 4, 2, 2,
+                    List.of(CharacterClassAbility.MOVE_OVER_BARRICADES)
+            ),
+            CharacterClassType.MEDIC, new CharacterClassData(
+                    2, 3, 3, 3,
+                    List.of(CharacterClassAbility.HEAL)
+            ),
+            CharacterClassType.BUILDER, new CharacterClassData(
+                    1, 3, 4, 3,
+                    List.of(CharacterClassAbility.BUILD_BARRICADE)
+            ),
+            CharacterClassType.DEMOLITIONIST, new CharacterClassData(
+                    1, 3, 2, 3,
+                    List.of(CharacterClassAbility.ONESHOT_TERRAIN)
+            )
+    );
 
-    // Default attack ranges for humans and zombies
-    public static final int HUMAN_ATTACK_RANGE = 3;
-    public static final int ZOMBIE_ATTACK_RANGE = 1;
+    public static final List<CharacterClassType> HUMAN_CLASSES = Arrays.asList(
+            CharacterClassType.NORMAL, CharacterClassType.MARKSMAN, CharacterClassType.TRACEUR,
+            CharacterClassType.MEDIC, CharacterClassType.BUILDER, CharacterClassType.DEMOLITIONIST
+    );
 
-    // Default attack cooldowns for humans and zombies
-    public static final int HUMAN_ATTACK_COOLDOWN = 3;
-    public static final int ZOMBIE_ATTACK_COOLDOWN = 0;
+    // Other cooldowns
+    public static final int ABILITY_COOLDOWN = 6;
 
     // The duration that a zombie is stunned for
     public static final int STUNNED_DURATION = 1;
-
-    // Default health for humans, zombies, and terrain
-    public static final int HUMAN_HEALTH = 1;
-    public static final int ZOMBIE_HEALTH = -1; // Symbolic, do not change
-    public static final int TERRAIN_HEALTH = 1;
 
     // Directions that characters can move
     public static final List<Position> DIRECTIONS = Arrays.asList(
@@ -49,12 +76,15 @@ public class Config implements Serializable {
     );
 
     // These are the various ids for terrain. Likely will need to be updated.
-    public static final List<TerrainData> TERRAIN_DATAS = Arrays.asList(
-            new TerrainData("wall", false, 3),
-            new TerrainData("barricade", true, 1),
-            new TerrainData("tree", false, 2),
-            new TerrainData("river", true, -1) // -1 makes invincible
+    public static final Map<TerrainType, TerrainData> TERRAIN_DATAS = Map.of(
+            TerrainType.WALL, new TerrainData(TerrainType.WALL, "wall", false, 3),
+            TerrainType.BARRICADE, new TerrainData(TerrainType.BARRICADE, "barricade", true, 1),
+            TerrainType.TREE, new TerrainData(TerrainType.TREE, "tree", false, 2),
+            TerrainType.RIVER, new TerrainData(TerrainType.RIVER, "river", true, -1) // -1 makes invincible
     );
+
+    // TODO: Remove this, for now just randomly generate from this terrain
+    public static final List<TerrainType> TERRAIN_TO_GENERATE = List.of(TerrainType.WALL, TerrainType.TREE, TerrainType.RIVER);
 
     // Networking
     public static final int TIMEOUT_MILIS_INIT = 15 * 1000; // The timeout for initial connection

@@ -3,6 +3,7 @@ package mech.mania.engine.player;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import mech.mania.engine.character.CharacterState;
+import mech.mania.engine.character.action.AbilityAction;
 import mech.mania.engine.character.action.AttackAction;
 import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
@@ -166,5 +167,46 @@ public class Player {
         }
 
         return attackActions;
+    }
+
+    public List<AbilityAction> getAbilityInput(AbilityInput abilityInput) {
+        List<AbilityAction> actions;
+        if (!isComputer) {
+            actions = new ArrayList<>();
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            // We wrap the entirety of handling user input in a try catch
+            try {
+                SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.ATTACK_PHASE, mapper.valueToTree(abilityInput));
+                client.send(sendMessage);
+
+                String response = client.receive();
+                actions = mapper.readValue(response, new TypeReference<>() {});
+            } catch (Exception e) {
+                // do nothing
+            }
+        } else {
+            // Otherwise, for computer, pick one of the valid moves and just do it
+            Random rand = new Random();
+
+            actions = new ArrayList<>();
+            Map<String, List<AbilityAction>> possibleAbilityActions = abilityInput.possibleAbilities();
+
+            for (String id : possibleAbilityActions.keySet()) {
+                List<AbilityAction> possibleAbilityActionsForThisCharacter = possibleAbilityActions.get(id);
+                if (possibleAbilityActionsForThisCharacter.isEmpty()) {
+                    continue;
+                }
+
+                AbilityAction abilityAction = possibleAbilityActionsForThisCharacter.get(
+                        rand.nextInt(possibleAbilityActionsForThisCharacter.size())
+                );
+
+                actions.add(abilityAction);
+            }
+        }
+
+        return actions;
     }
 }
