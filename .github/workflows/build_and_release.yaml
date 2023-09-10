@@ -27,10 +27,13 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew build
-          cd build/libs
-          mv engine-*.jar engine-${{ steps.extract_version.outputs.version }}.jar
-          zip -r ../../engine-${{ steps.extract_version.outputs.version }}.zip *
-          ls -a -R
+          mkdir engine-jar-build
+          mv build/libs/engine-*.jar engine-jar-build/engine-${{ steps.extract_version.outputs.version }}.jar
+          cd engine-jar-build
+          zip -r ../engine-${{ steps.extract_version.outputs.version }}.zip *
+          cd ..
+          cp -r engine-jar-build engine-aws-upload
+          mv engine-aws-upload/engine-*.jar engine-aws-upload/engine.jar
 
       - name: Create Release Draft
         id: create_release
@@ -57,3 +60,12 @@ jobs:
         with:
           name: engine-${{ steps.extract_version.outputs.version }}
           path: build/libs/engine-${{ steps.extract_version.outputs.version }}.jar
+
+      - uses: shallwefootball/s3-upload-action@4350529f410221787ccf424e50133cbc1b52704e
+        name: Upload jar to S3
+        with:
+          aws_key_id: ${{ secrets.AWS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_bucket: ${{ secrets.AWS_BUCKET }}
+          source_dir: 'engine-aws-upload'
+          destination_dir: "./"
