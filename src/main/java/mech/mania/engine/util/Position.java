@@ -1,5 +1,6 @@
 package mech.mania.engine.util;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import static mech.mania.engine.Config.BOARD_SIZE;
@@ -10,7 +11,8 @@ public class Position implements Cloneable {
     @JsonProperty("y")
     private int y;
 
-    public Position(int x, int y) {
+    @JsonCreator
+    public Position(@JsonProperty("x") int x, @JsonProperty("y") int y) {
         this.x = x;
         this.y = y;
     }

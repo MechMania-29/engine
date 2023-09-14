@@ -219,13 +219,15 @@ public class GameState {
             // Check if possible
             boolean possible = false;
             for (MoveAction possibleMove : possibleMoves) {
-                if (moveAction.getDestination() == possibleMove.getDestination()) {
+                if (moveAction.getDestination().equals(possibleMove.getDestination())) {
                     possible = true;
                     break;
                 }
             }
 
             if (!possible) {
+                System.err.println(String.format("Invalid move action %s", moveAction));
+                System.err.println(String.format("Allowed: %s", possibleMoves));
                 continue;
             }
 
@@ -237,7 +239,7 @@ public class GameState {
     private void applyAttackActions(List<AttackAction> attackActions, Map<String, List<AttackAction>> possibleAttackActions) {
         for (String id : possibleAttackActions.keySet()) {
             List<AttackAction> possibleAttacks = possibleAttackActions.get(id);
-            List<AttackAction> attemptedMoves = possibleAttacks.stream()
+            List<AttackAction> attemptedMoves = attackActions.stream()
                     .filter(moveAction -> moveAction.getExecutingCharacterId().equals(id))
                     .toList();
 
@@ -258,6 +260,8 @@ public class GameState {
             }
 
             if (!possible) {
+                System.err.println(String.format("Invalid move action %s", attackAction));
+                System.err.println(String.format("Allowed: %s", possibleAttacks));
                 continue;
             }
 
