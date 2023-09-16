@@ -1,4 +1,4 @@
-package mech.mania.engine.player;
+package mech.mania.engine.player.input;
 
 import mech.mania.engine.character.CharacterClassType;
 
