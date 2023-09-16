@@ -11,6 +11,7 @@ import mech.mania.engine.log.LogStats;
 import mech.mania.engine.network.Client;
 import mech.mania.engine.network.SendMessage;
 import mech.mania.engine.network.SendMessageType;
+import mech.mania.engine.player.input.*;
 import mech.mania.engine.util.Position;
 import mech.mania.engine.character.action.MoveAction;
 
