@@ -10,12 +10,10 @@ import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
 import mech.mania.engine.network.Client;
 import mech.mania.engine.network.SendMessage;
-import mech.mania.engine.network.SendMessageType;
+import mech.mania.engine.GamePhase;
 import mech.mania.engine.player.input.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,95 +26,120 @@ public class ClientPlayer extends Player {
         client = new Client(port);
     }
 
+    private void handleClientError(GamePhase phase, int turn, Exception e) {
+        System.err.printf("An error occurred handling input of %s player on turn %s during %s phase:\n%s\n",
+                isZombie ? "zombie" : "human", turn, phase, e);
+    }
+
     @Override
     public Map<CharacterClassType, Integer> getChosenClassesInput(ChooseClassesInput chooseClassesInput) {
-        Map<CharacterClassType, Integer> chosenClasses = new HashMap<>();
         ObjectMapper mapper = new ObjectMapper();
 
         // We wrap the entirety of handling user input in a try catch
         try {
-            SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.CHOOSE_CLASSES_PHASE, mapper.valueToTree(chooseClassesInput));
+            SendMessage sendMessage = new SendMessage(isZombie, GamePhase.CHOOSE_CLASSES, mapper.valueToTree(chooseClassesInput));
             client.send(sendMessage);
 
             String response = client.receive();
-            chosenClasses = mapper.readValue(response, new TypeReference<>() {});
+            Map<CharacterClassType, Integer> chosenClasses = mapper.readValue(response, new TypeReference<>() {});
+
+            if (chosenClasses == null) {
+                throw new RuntimeException("Received null, expected a proper response");
+            }
+
+            return chosenClasses;
         } catch (Exception e) {
-            // do nothing
+            handleClientError(GamePhase.CHOOSE_CLASSES, chooseClassesInput.turn(), e);
         }
 
-        return chosenClasses;
-
+        return Map.of();
     }
 
     @Override
     public List<MoveAction> getMoveInput(MoveInput moveInput) {
-        List<MoveAction> moveActions = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
 
         // We wrap the entirety of handling user input in a try catch
         try {
-            SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.MOVE_PHASE, mapper.valueToTree(moveInput));
+            SendMessage sendMessage = new SendMessage(isZombie, GamePhase.MOVE, mapper.valueToTree(moveInput));
             client.send(sendMessage);
 
             String response = client.receive();
-            moveActions = mapper.readValue(response, new TypeReference<>() {});
+            List<MoveAction> moveActions = mapper.readValue(response, new TypeReference<>() {});
+
+            if (moveActions == null) {
+                throw new RuntimeException("Received null, expected a proper response");
+            }
+
+            return moveActions;
         } catch (Exception e) {
-            // do nothing
+            handleClientError(GamePhase.MOVE, moveInput.turn(), e);
         }
 
-        return moveActions;
+        return List.of();
     }
 
     @Override
     public List<AttackAction> getAttackInput(AttackInput attackInput) {
-        List<AttackAction> attackActions = new ArrayList<>();
-
         ObjectMapper mapper = new ObjectMapper();
 
         // We wrap the entirety of handling user input in a try catch
         try {
-            SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.ATTACK_PHASE, mapper.valueToTree(attackInput));
+            SendMessage sendMessage = new SendMessage(isZombie, GamePhase.ATTACK, mapper.valueToTree(attackInput));
             client.send(sendMessage);
 
             String response = client.receive();
-            attackActions = mapper.readValue(response, new TypeReference<>() {
-            });
+            List<AttackAction> attackActions = mapper.readValue(response, new TypeReference<>() {});
+
+            if (attackActions == null) {
+                throw new RuntimeException("Received null, expected a proper response");
+            }
+
+            return attackActions;
         } catch (Exception e) {
-            // do nothing
+            handleClientError(GamePhase.ATTACK, attackInput.turn(), e);
         }
 
-        return attackActions;
+        return List.of();
     }
 
     @Override
     public List<AbilityAction> getAbilityInput(AbilityInput abilityInput) {
-        List<AbilityAction> actions = new ArrayList<>();
-
         ObjectMapper mapper = new ObjectMapper();
 
         // We wrap the entirety of handling user input in a try catch
         try {
-            SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.ABILITY_PHASE, mapper.valueToTree(abilityInput));
+            SendMessage sendMessage = new SendMessage(isZombie, GamePhase.ABILITY, mapper.valueToTree(abilityInput));
             client.send(sendMessage);
 
             String response = client.receive();
-            actions = mapper.readValue(response, new TypeReference<>() {});
+            List<AbilityAction> actions = mapper.readValue(response, new TypeReference<>() {});
+
+            if (actions == null) {
+                throw new RuntimeException("Received null, expected a proper response");
+            }
+
+            return actions;
         } catch (Exception e) {
-            // do nothing
+            handleClientError(GamePhase.ABILITY, abilityInput.turn(), e);
         }
 
-        return actions;
+        return List.of();
     }
 
     @Override
     public void finish(LogScores scores, LogStats stats) {
         if (client == null) return;
 
-        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
 
-        FinishInput finishInput = new FinishInput(scores, stats, stats.turns());
-        client.send(new SendMessage(isZombie, SendMessageType.FINISH, objectMapper.valueToTree(finishInput)));
+            FinishInput finishInput = new FinishInput(scores, stats, stats.turns());
+            client.send(new SendMessage(isZombie, GamePhase.FINISH, objectMapper.valueToTree(finishInput)));
 
-        client.close();
+            client.close();
+        } catch (Exception e) {
+            handleClientError(GamePhase.FINISH, stats.turns(), e);
+        }
     }
 }
