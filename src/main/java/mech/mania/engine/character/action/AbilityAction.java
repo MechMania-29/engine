@@ -1,5 +1,7 @@
 package mech.mania.engine.character.action;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import mech.mania.engine.util.Position;
 
 import java.util.Objects;
@@ -9,7 +11,11 @@ public class AbilityAction extends Action {
     private final Position positionalTarget;
     private final String characterIdTarget;
 
-    public AbilityAction(String executingCharacterId, AbilityActionType type, Position positionalTarget, String characterIdTarget) {
+    @JsonCreator
+    public AbilityAction(@JsonProperty("executingCharacterId") String executingCharacterId,
+                         @JsonProperty("type") AbilityActionType type,
+                         @JsonProperty("positionalTarget") Position positionalTarget,
+                         @JsonProperty("characterIdTarget") String characterIdTarget) {
         super(executingCharacterId);
 
         this.type = type;

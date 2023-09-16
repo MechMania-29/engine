@@ -230,7 +230,7 @@ public class Player {
 
             // We wrap the entirety of handling user input in a try catch
             try {
-                SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.ATTACK_PHASE, mapper.valueToTree(abilityInput));
+                SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.ABILITY_PHASE, mapper.valueToTree(abilityInput));
                 client.send(sendMessage);
 
                 String response = client.receive();
