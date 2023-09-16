@@ -2,6 +2,8 @@ package mech.mania.engine;
 
 import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
+import mech.mania.engine.player.ClientPlayer;
+import mech.mania.engine.player.ComputerPlayer;
 import mech.mania.engine.player.Player;
 
 import java.io.File;
@@ -72,8 +74,8 @@ public class Engine {
             return;
         }
 
-        Player humanPlayer = new Player(port1, false);
-        Player zombiePlayer = new Player(port2, true);
+        Player humanPlayer = port1 > 0 ? new ClientPlayer(false, port1) : new ComputerPlayer(false);
+        Player zombiePlayer = port2 > 0 ? new ClientPlayer(true, port2) : new ComputerPlayer(true);
 
         GameState gameState = new GameState(humanPlayer, zombiePlayer);
 
