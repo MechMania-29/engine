@@ -1,5 +1,6 @@
 package mech.mania.engine.terrain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +14,8 @@ import static mech.mania.engine.Config.DIFF_MODE_ENABLED;
 
 public class TerrainState implements Cloneable, Diffable {
     private final String id;
+    @JsonIgnore
+    private final TerrainType type;
     private final String imageId;
     private final Position position;
     @JsonProperty("health")
@@ -23,11 +26,17 @@ public class TerrainState implements Cloneable, Diffable {
 
     public TerrainState(String id, TerrainData data, Position position) {
         this.id = id;
+        this.type = data.type();
         this.imageId = data.imageId();
         this.position = position;
         this.health = data.health();
         this.canAttackThrough = data.canShootThrough();
         this.destroyed = false;
+    }
+
+    @JsonIgnore
+    public TerrainType getType() {
+        return type;
     }
 
     public String getId() {

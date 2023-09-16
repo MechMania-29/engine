@@ -1,19 +1,19 @@
 package mech.mania.engine;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import mech.mania.engine.character.CharacterClassAbility;
+import mech.mania.engine.character.CharacterClassType;
 import mech.mania.engine.character.CharacterState;
-import mech.mania.engine.character.action.AttackAction;
-import mech.mania.engine.character.action.AttackActionType;
+import mech.mania.engine.character.action.*;
 import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
-import mech.mania.engine.player.AttackInput;
-import mech.mania.engine.player.MoveInput;
+import mech.mania.engine.player.*;
 import mech.mania.engine.terrain.TerrainData;
 import mech.mania.engine.terrain.TerrainState;
+import mech.mania.engine.terrain.TerrainType;
 import mech.mania.engine.util.Position;
-import mech.mania.engine.character.action.MoveAction;
 import mech.mania.engine.log.Log;
-import mech.mania.engine.player.Player;
+import mech.mania.engine.util.SpreadMap;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,6 +35,7 @@ public class GameState {
         terrainStates = new HashMap<>();
         Map<String, Map<String, JsonNode>> characterStateDiffs = new HashMap<>();
 
+        // Create characters
         for (int i = 0; i < TOTAL_CHARACTERS; i++) {
             String id = Integer.toString(i);
             boolean isZombie = i < STARTING_ZOMBIES;
@@ -46,9 +47,19 @@ public class GameState {
                 startingPosition = new Position(BOARD_SIZE / 2 + i, BOARD_SIZE - 1);
             }
 
-            CharacterState characterState = new CharacterState(id, startingPosition, isZombie);
+            CharacterClassType classType = isZombie ? CharacterClassType.ZOMBIE : CharacterClassType.NORMAL;
+            CharacterState characterState = new CharacterState(id, startingPosition, isZombie, classType);
             characterStates.put(id, characterState);
+        }
 
+        // Apply human classes
+        ChooseClassesInput chooseClassesInput = new ChooseClassesInput(HUMAN_CLASSES, NUM_CLASSES_TO_PICK, MAX_PER_SAME_CLASS, turn);
+        Map<CharacterClassType, Integer> chosenClasses = human.getChosenClassesInput(chooseClassesInput);
+        applyChosenClassesToHumans(chosenClasses, chooseClassesInput);
+
+        // Generate character diff
+        for (CharacterState characterState : characterStates.values()) {
+            String id = characterState.getId();
             Map<String, JsonNode> diff = characterState.diff(null);
             characterStateDiffs.put(id, diff);
         }
@@ -59,7 +70,8 @@ public class GameState {
         for (int i = 0; i < 500; i++) {
             String id = Integer.toString(i);
             Position position = new Position(rand.nextInt(0, BOARD_SIZE), rand.nextInt(0, BOARD_SIZE));
-            TerrainData terrainData = TERRAIN_DATAS.get(rand.nextInt(TERRAIN_DATAS.size()));
+            TerrainType terrainType = TERRAIN_TO_GENERATE.get(rand.nextInt(TERRAIN_TO_GENERATE.size()));
+            TerrainData terrainData = TERRAIN_DATAS.get(terrainType);
 
             TerrainState terrainState = new TerrainState(id, terrainData, position);
             terrainStates.put(id, terrainState);
@@ -128,6 +140,15 @@ public class GameState {
 
         // Decrement attack cooldowns and effects
         applyCooldownAndEffectDecay(player.isZombie());
+
+        // Get player ability input
+        Map<String, List<AbilityAction>> possibleAbilityActions = getPossibleAbilityActions(player.isZombie());
+        List<AbilityAction> abilityActions = player.getAbilityInput(
+                new AbilityInput(possibleAbilityActions, turn, characterStates, terrainStates)
+        );
+
+        // Apply ability actions
+        applyAbilityActions(abilityActions, possibleAbilityActions);
 
         // Store character diffs
         Map<String, Map<String, JsonNode>> characterStateDiffs = new HashMap<>();
@@ -202,6 +223,58 @@ public class GameState {
         characterStates.values().forEach(CharacterState::clearActions);
     }
 
+    private void applyChosenClassesToHumans(Map<CharacterClassType, Integer> chosen, ChooseClassesInput chooseClassesInput) {
+        List<CharacterClassType> possibleChoices = chooseClassesInput.choices();
+        int numToPick = chooseClassesInput.numToPick();
+        int maxPerSameClass = chooseClassesInput.maxPerSameClass();
+
+        List<CharacterClassType> spreadChosen = SpreadMap.spread(chosen);
+
+        int picked = 0;
+        Map<CharacterClassType, Integer> classCounts = new HashMap<>();
+        while (picked < numToPick && !spreadChosen.isEmpty()) {
+            CharacterClassType selected = spreadChosen.remove(0);
+
+            if (!possibleChoices.contains(selected)) {
+                continue;
+            }
+
+            if (!classCounts.containsKey(selected)) {
+                classCounts.put(selected, 0);
+            }
+
+            int currentCount = classCounts.get(selected);
+            if (currentCount < maxPerSameClass) {
+                classCounts.put(selected, currentCount + 1);
+                picked += 1;
+            }
+        }
+
+        List<CharacterState> humans = characterStates.values().stream().filter(character -> !character.isZombie()).toList();
+
+        while (picked < humans.size()) {
+            CharacterClassType selected = CharacterClassType.NORMAL;
+
+            if (!classCounts.containsKey(selected)) {
+                classCounts.put(selected, 0);
+            }
+
+            int currentCount = classCounts.get(selected);
+            if (currentCount < maxPerSameClass) {
+                classCounts.put(selected, currentCount + 1);
+                picked += 1;
+            }
+        }
+
+        List<CharacterClassType> classes = SpreadMap.spread(classCounts);
+
+        for (int i = 0; i < humans.size(); i++) {
+            CharacterState human = humans.get(i);
+            CharacterClassType characterClassType = classes.get(i);
+            human.applyClass(characterClassType);
+        }
+    }
+
     private void applyMoveActions(List<MoveAction> moveActions, Map<String, List<MoveAction>> possibleMoveActions) {
         for (String id : possibleMoveActions.keySet()) {
             List<MoveAction> possibleMoves = possibleMoveActions.get(id);
@@ -236,6 +309,7 @@ public class GameState {
             characterStates.get(id).setPosition(moveAction.getDestination());
         }
     }
+
     private void applyAttackActions(List<AttackAction> attackActions, Map<String, List<AttackAction>> possibleAttackActions) {
         for (String id : possibleAttackActions.keySet()) {
             List<AttackAction> possibleAttacks = possibleAttackActions.get(id);
@@ -295,13 +369,69 @@ public class GameState {
                 TerrainState attacking = terrainStates.get(attackingId);
 
                 attacking.attack();
+
+                // One shot ability
+                if (executing.getAbilities().contains(CharacterClassAbility.ONESHOT_TERRAIN) && attacking.isDestroyable()) {
+                    while (!attacking.isDestroyed()) {
+                        attacking.attack();
+                    }
+                }
             }
             executing.setAttackAction(attackAction);
             executing.resetAttackCooldownLeft();
         }
     }
 
-    private Map<String, Position> getTilesInRange(Position start, int range, boolean isAttack) {
+    private void applyAbilityActions(List<AbilityAction> abilityActions, Map<String, List<AbilityAction>> possibleAbilityActions) {
+        for (String id : possibleAbilityActions.keySet()) {
+            List<AbilityAction> possibleActions = possibleAbilityActions.get(id);
+            List<AbilityAction> attemptedActions = abilityActions.stream()
+                    .filter(action -> action.getExecutingCharacterId().equals(id))
+                    .toList();
+
+            if (attemptedActions.isEmpty()) {
+                continue;
+            }
+
+            // Only register the first action
+            AbilityAction abilityAction = attemptedActions.get(0);
+
+            // Check if possible
+            boolean possible = false;
+            for (AbilityAction possibleMove : possibleActions) {
+                if (abilityAction.equals(possibleMove)) {
+                    possible = true;
+                    break;
+                }
+            }
+
+            if (!possible) {
+                continue;
+            }
+
+            // Apply action
+            AbilityActionType abilityType = abilityAction.getType();
+            CharacterState executing = characterStates.get(id);
+
+            if (abilityType == AbilityActionType.HEAL) {
+                // Handle healing ability
+                CharacterState healing = characterStates.get(abilityAction.getCharacterIdTarget());
+
+                healing.setHealth(healing.getHealth() + 1);
+            } else if (abilityType == AbilityActionType.BUILD_BARRICADE) {
+                // Handle build ability
+                Position newPosition = abilityAction.getPositionalTarget();
+                String newId = Integer.toString(terrainStates.size());
+                TerrainData newData = TERRAIN_DATAS.get(TerrainType.BARRICADE);
+
+                terrainStates.put(newId, new TerrainState(newId, newData, newPosition));
+            }
+            executing.setAbilityAction(abilityAction);
+            executing.resetAbilityCooldownLeft();
+        }
+    }
+
+    private Map<String, Position> getTilesInRange(Position start, int range, boolean isAttack, boolean ignoreBarricades) {
         Map<String, Position> moves = new HashMap<>();
 
         if (range <= 0) {
@@ -333,6 +463,10 @@ public class GameState {
                 if (isAttack && terrainState.canAttackThrough()) {
                     canTraverseThrough = true;
                 }
+
+                if (!isAttack && ignoreBarricades && terrainState.getType() == TerrainType.BARRICADE) {
+                    canTraverseThrough = true;
+                }
             }
 
             if (!canTraverseThrough) {
@@ -345,7 +479,7 @@ public class GameState {
             }
 
             // Recursively check for next moves
-            Map<String, Position> fromThere = getTilesInRange(newPosition, range - 1, isAttack);
+            Map<String, Position> fromThere = getTilesInRange(newPosition, range - 1, isAttack, ignoreBarricades);
 
             fromThere.forEach((fromThereKey, fromThereNewPosition) -> {
                 if (!moves.containsKey(fromThereKey)) {
@@ -371,8 +505,9 @@ public class GameState {
         Map<String, List<MoveAction>> possibleActions = new HashMap<>();
 
         for (CharacterState characterState : controllableCharacterStates.values()) {
-            int range = characterState.canMove() ? characterState.getMoveSpeed() : 0;
-            Map<String, Position> moves = getTilesInRange(characterState.getPosition(), range, false);
+            int range = characterState.canMove() ? characterState.getMoveSpeed() : -1;
+            boolean ignoreBarricades = characterState.getAbilities().contains(CharacterClassAbility.MOVE_OVER_BARRICADES);
+            Map<String, Position> moves = getTilesInRange(characterState.getPosition(), range, false, ignoreBarricades);
 
             possibleActions.put(characterState.getId(),
                     moves.values().stream()
@@ -397,41 +532,40 @@ public class GameState {
         Map<String, List<AttackAction>> possibleAttackActions = new HashMap<>();
 
         for (CharacterState characterState : controllableCharacterStates.values()) {
-            Map<String, Position> attackable = getTilesInRange(characterState.getPosition(), characterState.getAttackRange(), true);
+            int range = characterState.canAttack() ? characterState.getAttackRange() : -1;
+            Map<String, Position> attackable = getTilesInRange(characterState.getPosition(), range, true, false);
             List<AttackAction> attackActions = new ArrayList<>();
 
-            if (characterState.canAttack()) {
-                // Handle attackable enemies
-                for (CharacterState otherCharacterState : characterStates.values()) {
-                    // If is on our team, we don't attack them
-                    if (otherCharacterState.isZombie() == isZombie) {
-                        continue;
-                    }
-
-                    // If they are not within attackable range, we cannot attack them
-                    if (!attackable.containsKey(otherCharacterState.getPosition().toString())) {
-                        continue;
-                    }
-
-                    // We can attack them
-                    attackActions.add(new AttackAction(characterState.getId(), otherCharacterState.getId(), AttackActionType.CHARACTER));
+            // Handle attackable enemies
+            for (CharacterState otherCharacterState : characterStates.values()) {
+                // If is on our team, we don't attack them
+                if (otherCharacterState.isZombie() == isZombie) {
+                    continue;
                 }
 
-                // Handle attackable terrain
-                for (TerrainState terrainState : terrainStates.values()) {
-                    // If the terrain is destroyed or not destroyable, we cannot attack it
-                    if (terrainState.isDestroyed() || !terrainState.isDestroyable()) {
-                        continue;
-                    }
-
-                    // If they are not within attackable range, we cannot attack it
-                    if (!attackable.containsKey(terrainState.getPosition().toString())) {
-                        continue;
-                    }
-
-                    // We can attack them
-                    attackActions.add(new AttackAction(characterState.getId(), terrainState.getId(), AttackActionType.TERRAIN));
+                // If they are not within attackable range, we cannot attack them
+                if (!attackable.containsKey(otherCharacterState.getPosition().toString())) {
+                    continue;
                 }
+
+                // We can attack them
+                attackActions.add(new AttackAction(characterState.getId(), otherCharacterState.getId(), AttackActionType.CHARACTER));
+            }
+
+            // Handle attackable terrain
+            for (TerrainState terrainState : terrainStates.values()) {
+                // If the terrain is destroyed or not destroyable, we cannot attack it
+                if (terrainState.isDestroyed() || !terrainState.isDestroyable()) {
+                    continue;
+                }
+
+                // If they are not within attackable range, we cannot attack it
+                if (!attackable.containsKey(terrainState.getPosition().toString())) {
+                    continue;
+                }
+
+                // We can attack them
+                attackActions.add(new AttackAction(characterState.getId(), terrainState.getId(), AttackActionType.TERRAIN));
             }
 
             // Add all attack actions for character
@@ -439,6 +573,64 @@ public class GameState {
         }
 
         return possibleAttackActions;
+    }
+
+    private Map<String, List<AbilityAction>> getPossibleAbilityActions(boolean isZombie) {
+        // Get controllable character states
+        Map<String, CharacterState> controllableCharacterStates = new HashMap<>();
+
+        for (CharacterState characterState : characterStates.values()) {
+            if (characterState.isZombie() == isZombie) {
+                controllableCharacterStates.put(characterState.getId(), characterState);
+            }
+        }
+
+        // Get possible moves for each character
+        Map<String, List<AbilityAction>> possibleActions = new HashMap<>();
+
+        for (CharacterState executing : controllableCharacterStates.values()) {
+            String executingId = executing.getId();
+            int range = executing.canAbility() ? executing.getAttackRange() : -1;
+            Map<String, Position> locations = getTilesInRange(executing.getPosition(), range, false, false);
+            List<AbilityAction> actions = new ArrayList<>();
+
+            for (Position location : locations.values()) {
+                if (executing.getAbilities().contains(CharacterClassAbility.HEAL)) {
+                    Optional<CharacterState> targetMaybe = characterStates.values().stream().filter(pos -> pos.getPosition().equals(location)).findFirst();
+
+                    if (targetMaybe.isEmpty()) {
+                        continue;
+                    }
+
+                    CharacterState target = targetMaybe.get();
+                    String targetId = target.getId();
+
+                    if (Objects.equals(targetId, executingId)) {
+                        continue;
+                    }
+
+                    actions.add(new AbilityAction(executingId, AbilityActionType.HEAL, null, targetId));
+                } else if (executing.getAbilities().contains(CharacterClassAbility.BUILD_BARRICADE)) {
+                    long characterOccupying = characterStates.values().stream().filter(characterState -> characterState.getPosition().equals(location)).count();
+
+                    if (characterOccupying > 0) {
+                        continue;
+                    }
+
+                    long terrainOccupying = terrainStates.values().stream().filter(terrainState -> terrainState.getPosition().equals(location)).count();
+
+                    if (terrainOccupying > 0) {
+                        continue;
+                    }
+
+                    actions.add(new AbilityAction(executingId, AbilityActionType.BUILD_BARRICADE, location, null));
+                }
+            }
+
+            possibleActions.put(executingId, actions);
+        }
+
+        return possibleActions;
     }
 
     private void applyCooldownAndEffectDecay(boolean isZombie) {
