@@ -2,10 +2,12 @@ package mech.mania.engine.util;
 import mech.mania.engine.character.CharacterClassType;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class SpreadMapTest {
     @Test
@@ -33,6 +35,20 @@ public class SpreadMapTest {
         classMap.put(CharacterClassType.NORMAL, 4);
 
         List<CharacterClassType> classList = SpreadMap.spread(classMap);
-        assertEquals("[DEMOLITIONIST, NORMAL, MARKSMAN, MEDIC, DEMOLITIONIST, NORMAL, MEDIC, NORMAL, MEDIC, NORMAL]", classList.toString());
+        assertEquals(
+                classList.stream().filter(classType -> classType == CharacterClassType.DEMOLITIONIST).count(), 2
+        );
+        assertEquals(
+                classList.stream().filter(classType -> classType == CharacterClassType.MEDIC).count(), 3
+        );
+        assertEquals(
+                classList.stream().filter(classType -> classType == CharacterClassType.MARKSMAN).count(), 1
+        );
+        assertEquals(
+                classList.stream().filter(classType -> classType == CharacterClassType.NORMAL).count(), 4
+        );
+        assertNotEquals(classList.get(0), classList.get(1));
+        assertNotEquals(classList.get(1), classList.get(2));
+        assertNotEquals(classList.get(2), classList.get(3));
     }
 }
