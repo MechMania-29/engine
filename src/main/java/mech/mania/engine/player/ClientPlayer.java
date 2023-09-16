@@ -10,7 +10,7 @@ import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
 import mech.mania.engine.network.Client;
 import mech.mania.engine.network.SendMessage;
-import mech.mania.engine.network.SendMessageType;
+import mech.mania.engine.GamePhase;
 import mech.mania.engine.player.input.*;
 
 import java.io.IOException;
@@ -26,9 +26,9 @@ public class ClientPlayer extends Player {
         client = new Client(port);
     }
 
-    private void handleClientError(SendMessageType type, int turn, Exception e) {
-        System.err.printf("An error occurred handling input of %s player on turn %s during %s:\n%s\n",
-                isZombie ? "zombie" : "human", turn, type, e);
+    private void handleClientError(GamePhase phase, int turn, Exception e) {
+        System.err.printf("An error occurred handling input of %s player on turn %s during %s phase:\n%s\n",
+                isZombie ? "zombie" : "human", turn, phase, e);
     }
 
     @Override
@@ -37,7 +37,7 @@ public class ClientPlayer extends Player {
 
         // We wrap the entirety of handling user input in a try catch
         try {
-            SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.CHOOSE_CLASSES_PHASE, mapper.valueToTree(chooseClassesInput));
+            SendMessage sendMessage = new SendMessage(isZombie, GamePhase.CHOOSE_CLASSES, mapper.valueToTree(chooseClassesInput));
             client.send(sendMessage);
 
             String response = client.receive();
@@ -49,7 +49,7 @@ public class ClientPlayer extends Player {
 
             return chosenClasses;
         } catch (Exception e) {
-            handleClientError(SendMessageType.CHOOSE_CLASSES_PHASE, chooseClassesInput.turn(), e);
+            handleClientError(GamePhase.CHOOSE_CLASSES, chooseClassesInput.turn(), e);
         }
 
         return Map.of();
@@ -61,7 +61,7 @@ public class ClientPlayer extends Player {
 
         // We wrap the entirety of handling user input in a try catch
         try {
-            SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.MOVE_PHASE, mapper.valueToTree(moveInput));
+            SendMessage sendMessage = new SendMessage(isZombie, GamePhase.MOVE, mapper.valueToTree(moveInput));
             client.send(sendMessage);
 
             String response = client.receive();
@@ -73,7 +73,7 @@ public class ClientPlayer extends Player {
 
             return moveActions;
         } catch (Exception e) {
-            handleClientError(SendMessageType.MOVE_PHASE, moveInput.turn(), e);
+            handleClientError(GamePhase.MOVE, moveInput.turn(), e);
         }
 
         return List.of();
@@ -85,7 +85,7 @@ public class ClientPlayer extends Player {
 
         // We wrap the entirety of handling user input in a try catch
         try {
-            SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.ATTACK_PHASE, mapper.valueToTree(attackInput));
+            SendMessage sendMessage = new SendMessage(isZombie, GamePhase.ATTACK, mapper.valueToTree(attackInput));
             client.send(sendMessage);
 
             String response = client.receive();
@@ -97,7 +97,7 @@ public class ClientPlayer extends Player {
 
             return attackActions;
         } catch (Exception e) {
-            handleClientError(SendMessageType.ATTACK_PHASE, attackInput.turn(), e);
+            handleClientError(GamePhase.ATTACK, attackInput.turn(), e);
         }
 
         return List.of();
@@ -109,7 +109,7 @@ public class ClientPlayer extends Player {
 
         // We wrap the entirety of handling user input in a try catch
         try {
-            SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.ABILITY_PHASE, mapper.valueToTree(abilityInput));
+            SendMessage sendMessage = new SendMessage(isZombie, GamePhase.ABILITY, mapper.valueToTree(abilityInput));
             client.send(sendMessage);
 
             String response = client.receive();
@@ -121,7 +121,7 @@ public class ClientPlayer extends Player {
 
             return actions;
         } catch (Exception e) {
-            handleClientError(SendMessageType.ABILITY_PHASE, abilityInput.turn(), e);
+            handleClientError(GamePhase.ABILITY, abilityInput.turn(), e);
         }
 
         return List.of();
@@ -135,11 +135,11 @@ public class ClientPlayer extends Player {
             ObjectMapper objectMapper = new ObjectMapper();
 
             FinishInput finishInput = new FinishInput(scores, stats, stats.turns());
-            client.send(new SendMessage(isZombie, SendMessageType.FINISH, objectMapper.valueToTree(finishInput)));
+            client.send(new SendMessage(isZombie, GamePhase.FINISH, objectMapper.valueToTree(finishInput)));
 
             client.close();
         } catch (Exception e) {
-            handleClientError(SendMessageType.FINISH, stats.turns(), e);
+            handleClientError(GamePhase.FINISH, stats.turns(), e);
         }
     }
 }
