@@ -26,14 +26,13 @@ public class SpreadMapTest {
         List<Integer> integerList = SpreadMap.spread(integerMap);
         assertEquals("[1, 2, 3, 1, 2, 2]", integerList.toString());
 
-        Map<CharacterClassType, Integer> classMap = Map.of(
-                CharacterClassType.DEMOLITIONIST, 2,
-                CharacterClassType.MEDIC, 3,
-                CharacterClassType.MARKSMAN, 1,
-                CharacterClassType.NORMAL, 4
-        );
+        Map<CharacterClassType, Integer> classMap = new HashMap<>();
+        classMap.put(CharacterClassType.DEMOLITIONIST, 2);
+        classMap.put(CharacterClassType.MEDIC, 3);
+        classMap.put(CharacterClassType.MARKSMAN, 1);
+        classMap.put(CharacterClassType.NORMAL, 4);
 
         List<CharacterClassType> classList = SpreadMap.spread(classMap);
-        assertEquals("[NORMAL, MARKSMAN, DEMOLITIONIST, MEDIC, NORMAL, DEMOLITIONIST, MEDIC, NORMAL, MEDIC, NORMAL]", classList.toString());
+        assertEquals("[DEMOLITIONIST, NORMAL, MARKSMAN, MEDIC, DEMOLITIONIST, NORMAL, MEDIC, NORMAL, MEDIC, NORMAL]", classList.toString());
     }
 }
