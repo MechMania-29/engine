@@ -46,4 +46,14 @@ public class AbilityAction extends Action {
                 Objects.equals(characterIdTarget, other.characterIdTarget) &&
                 type == other.type;
     }
+
+    @Override
+    public String toString() {
+        return "AbilityAction{" +
+                "executingCharacterId=" + this.getExecutingCharacterId() + ", " +
+                "type=" + type + ", " +
+                "positionalTarget=" + positionalTarget + ", " +
+                "characterIdTarget=" + characterIdTarget +
+                '}';
+    }
 }

@@ -223,6 +223,11 @@ public class GameState {
         return new LogStats(turn, getHumansCount(), getZombiesCount());
     }
 
+    private void handleInvalidInputError(boolean isZombie, GamePhase phase, String got, String expected) {
+        System.err.printf("%s player provided an invalid input on turn %d during %s phase: %s\nExpected (one of): %s\n",
+                isZombie ? "zombie" : "human", turn, phase,got, expected);
+    }
+
     private void applyClearActions(Map<String, CharacterState> characterStates) {
         characterStates.values().forEach(CharacterState::clearActions);
     }
@@ -234,12 +239,20 @@ public class GameState {
 
         List<CharacterClassType> spreadChosen = SpreadMap.spread(chosen);
 
+        if (spreadChosen.size() > numToPick) {
+            handleInvalidInputError(false, GamePhase.CHOOSE_CLASSES,
+                    String.format("%d chosen classes", spreadChosen.size()),
+                    String.format("%d max chosen classes", numToPick));
+        }
+
         int picked = 0;
         Map<CharacterClassType, Integer> classCounts = new HashMap<>();
         while (picked < numToPick && !spreadChosen.isEmpty()) {
             CharacterClassType selected = spreadChosen.remove(0);
 
             if (!possibleChoices.contains(selected)) {
+                handleInvalidInputError(false, GamePhase.CHOOSE_CLASSES,
+                        selected.toString(), possibleChoices.toString());
                 continue;
             }
 
@@ -251,6 +264,10 @@ public class GameState {
             if (currentCount < maxPerSameClass) {
                 classCounts.put(selected, currentCount + 1);
                 picked += 1;
+            } else {
+                handleInvalidInputError(false, GamePhase.CHOOSE_CLASSES,
+                        String.format("%d of %s class", picked, selected),
+                        String.format("%d max of %s class", maxPerSameClass, selected));
             }
         }
 
@@ -264,10 +281,8 @@ public class GameState {
             }
 
             int currentCount = classCounts.get(selected);
-            if (currentCount < maxPerSameClass) {
-                classCounts.put(selected, currentCount + 1);
-                picked += 1;
-            }
+            classCounts.put(selected, currentCount + 1);
+            picked += 1;
         }
 
         List<CharacterClassType> classes = SpreadMap.spread(classCounts);
@@ -281,6 +296,7 @@ public class GameState {
 
     private void applyMoveActions(List<MoveAction> moveActions, Map<String, List<MoveAction>> possibleMoveActions) {
         for (String id : possibleMoveActions.keySet()) {
+            CharacterState executing = characterStates.get(id);
             List<MoveAction> possibleMoves = possibleMoveActions.get(id);
             List<MoveAction> attemptedMoves = moveActions.stream()
                     .filter(moveAction -> moveAction.getExecutingCharacterId().equals(id))
@@ -303,19 +319,20 @@ public class GameState {
             }
 
             if (!possible) {
-                System.err.println(String.format("Invalid move action %s", moveAction));
-                System.err.println(String.format("Allowed: %s", possibleMoves));
+                handleInvalidInputError(executing.isZombie(), GamePhase.MOVE,
+                        moveAction.toString(), possibleMoves.toString());
                 continue;
             }
 
 
             // Apply move action
-            characterStates.get(id).setPosition(moveAction.getDestination());
+            executing.setPosition(moveAction.getDestination());
         }
     }
 
     private void applyAttackActions(List<AttackAction> attackActions, Map<String, List<AttackAction>> possibleAttackActions) {
         for (String id : possibleAttackActions.keySet()) {
+            CharacterState executing = characterStates.get(id);
             List<AttackAction> possibleAttacks = possibleAttackActions.get(id);
             List<AttackAction> attemptedMoves = attackActions.stream()
                     .filter(moveAction -> moveAction.getExecutingCharacterId().equals(id))
@@ -338,14 +355,13 @@ public class GameState {
             }
 
             if (!possible) {
-                System.err.println(String.format("Invalid move action %s", attackAction));
-                System.err.println(String.format("Allowed: %s", possibleAttacks));
+                handleInvalidInputError(executing.isZombie(), GamePhase.ATTACK,
+                        attackAction.toString(), possibleAttacks.toString());
                 continue;
             }
 
             // Apply attack action
             AttackActionType attackType = attackAction.getType();
-            CharacterState executing = characterStates.get(id);
             String attackingId = attackAction.getAttackingId();
             if (attackType == AttackActionType.CHARACTER) {
                 // Handle character attacks
@@ -388,6 +404,7 @@ public class GameState {
 
     private void applyAbilityActions(List<AbilityAction> abilityActions, Map<String, List<AbilityAction>> possibleAbilityActions) {
         for (String id : possibleAbilityActions.keySet()) {
+            CharacterState executing = characterStates.get(id);
             List<AbilityAction> possibleActions = possibleAbilityActions.get(id);
             List<AbilityAction> attemptedActions = abilityActions.stream()
                     .filter(action -> action.getExecutingCharacterId().equals(id))
@@ -410,12 +427,13 @@ public class GameState {
             }
 
             if (!possible) {
+                handleInvalidInputError(executing.isZombie(), GamePhase.ABILITY,
+                        abilityAction.toString(), possibleActions.toString());
                 continue;
             }
 
             // Apply action
             AbilityActionType abilityType = abilityAction.getType();
-            CharacterState executing = characterStates.get(id);
 
             if (abilityType == AbilityActionType.HEAL) {
                 // Handle healing ability
