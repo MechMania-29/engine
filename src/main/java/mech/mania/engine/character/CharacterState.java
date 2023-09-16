@@ -1,5 +1,6 @@
 package mech.mania.engine.character;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import mech.mania.engine.character.action.AbilityAction;
@@ -18,6 +19,7 @@ public class CharacterState implements Cloneable, Diffable {
     private final String id;
     private Position position;
     private boolean isZombie;
+    @JsonProperty("class")
     private CharacterClassType classType;
     private List<CharacterClassAbility> abilities;
     private int health;
@@ -86,7 +88,7 @@ public class CharacterState implements Cloneable, Diffable {
         this.position = position;
     }
 
-    private void applyClass(CharacterClassType classType) {
+    public void applyClass(CharacterClassType classType) {
         this.classType = classType;
 
         CharacterClassData classData = CLASSES.get(classType);

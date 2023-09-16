@@ -7,15 +7,13 @@ import mech.mania.engine.character.CharacterState;
 import mech.mania.engine.character.action.*;
 import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
-import mech.mania.engine.player.AbilityInput;
-import mech.mania.engine.player.AttackInput;
-import mech.mania.engine.player.MoveInput;
+import mech.mania.engine.player.*;
 import mech.mania.engine.terrain.TerrainData;
 import mech.mania.engine.terrain.TerrainState;
 import mech.mania.engine.terrain.TerrainType;
 import mech.mania.engine.util.Position;
 import mech.mania.engine.log.Log;
-import mech.mania.engine.player.Player;
+import mech.mania.engine.util.SpreadMap;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,6 +35,7 @@ public class GameState {
         terrainStates = new HashMap<>();
         Map<String, Map<String, JsonNode>> characterStateDiffs = new HashMap<>();
 
+        // Create characters
         for (int i = 0; i < TOTAL_CHARACTERS; i++) {
             String id = Integer.toString(i);
             boolean isZombie = i < STARTING_ZOMBIES;
@@ -51,7 +50,16 @@ public class GameState {
             CharacterClassType classType = isZombie ? CharacterClassType.ZOMBIE : CharacterClassType.NORMAL;
             CharacterState characterState = new CharacterState(id, startingPosition, isZombie, classType);
             characterStates.put(id, characterState);
+        }
 
+        // Apply human classes
+        ChooseClassesInput chooseClassesInput = new ChooseClassesInput(HUMAN_CLASSES, NUM_CLASSES_TO_PICK, MAX_PER_SAME_CLASS, turn);
+        Map<CharacterClassType, Integer> chosenClasses = human.getChosenClassesInput(chooseClassesInput);
+        applyChosenClassesToHumans(chosenClasses, chooseClassesInput);
+
+        // Generate character diff
+        for (CharacterState characterState : characterStates.values()) {
+            String id = characterState.getId();
             Map<String, JsonNode> diff = characterState.diff(null);
             characterStateDiffs.put(id, diff);
         }
@@ -213,6 +221,58 @@ public class GameState {
 
     private void applyClearActions(Map<String, CharacterState> characterStates) {
         characterStates.values().forEach(CharacterState::clearActions);
+    }
+
+    private void applyChosenClassesToHumans(Map<CharacterClassType, Integer> chosen, ChooseClassesInput chooseClassesInput) {
+        List<CharacterClassType> possibleChoices = chooseClassesInput.choices();
+        int numToPick = chooseClassesInput.numToPick();
+        int maxPerSameClass = chooseClassesInput.maxPerSameClass();
+
+        List<CharacterClassType> spreadChosen = SpreadMap.spread(chosen);
+
+        int picked = 0;
+        Map<CharacterClassType, Integer> classCounts = new HashMap<>();
+        while (picked < numToPick && !spreadChosen.isEmpty()) {
+            CharacterClassType selected = spreadChosen.remove(0);
+
+            if (!possibleChoices.contains(selected)) {
+                continue;
+            }
+
+            if (!classCounts.containsKey(selected)) {
+                classCounts.put(selected, 0);
+            }
+
+            int currentCount = classCounts.get(selected);
+            if (currentCount < maxPerSameClass) {
+                classCounts.put(selected, currentCount + 1);
+                picked += 1;
+            }
+        }
+
+        List<CharacterState> humans = characterStates.values().stream().filter(character -> !character.isZombie()).toList();
+
+        while (picked < humans.size()) {
+            CharacterClassType selected = CharacterClassType.NORMAL;
+
+            if (!classCounts.containsKey(selected)) {
+                classCounts.put(selected, 0);
+            }
+
+            int currentCount = classCounts.get(selected);
+            if (currentCount < maxPerSameClass) {
+                classCounts.put(selected, currentCount + 1);
+                picked += 1;
+            }
+        }
+
+        List<CharacterClassType> classes = SpreadMap.spread(classCounts);
+
+        for (int i = 0; i < humans.size(); i++) {
+            CharacterState human = humans.get(i);
+            CharacterClassType characterClassType = classes.get(i);
+            human.applyClass(characterClassType);
+        }
     }
 
     private void applyMoveActions(List<MoveAction> moveActions, Map<String, List<MoveAction>> possibleMoveActions) {

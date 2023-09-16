@@ -25,6 +25,9 @@ public class Config implements Serializable {
     public static final int STARTING_ZOMBIES = 5;
 
     // Classes
+    public static final int MAX_PER_SAME_CLASS = 10;
+    public static final int NUM_CLASSES_TO_PICK = 16;
+
     public static final Map<CharacterClassType, CharacterClassData> CLASSES = Map.of(
             CharacterClassType.NORMAL, new CharacterClassData(
                     1, 3, 4, 3,

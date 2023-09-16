@@ -9,4 +9,4 @@ import mech.mania.engine.terrain.TerrainState;
 import java.util.List;
 import java.util.Map;
 
-public record FinishInput(LogScores scores, LogStats stats) {}
+public record FinishInput(LogScores scores, LogStats stats, int turn) {}

@@ -2,6 +2,7 @@ package mech.mania.engine.player;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import mech.mania.engine.character.CharacterClassType;
 import mech.mania.engine.character.CharacterState;
 import mech.mania.engine.character.action.AbilityAction;
 import mech.mania.engine.character.action.AttackAction;
@@ -42,10 +43,61 @@ public class Player {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        FinishInput finishInput = new FinishInput(scores, stats);
+        FinishInput finishInput = new FinishInput(scores, stats, stats.turns());
         client.send(new SendMessage(isZombie, SendMessageType.FINISH, objectMapper.valueToTree(finishInput)));
 
         client.close();
+    }
+
+    public Map<CharacterClassType, Integer> getChosenClassesInput(ChooseClassesInput chooseClassesInput) {
+        List<CharacterClassType> possibleChoices = chooseClassesInput.choices();
+        int numToPick = chooseClassesInput.numToPick();
+        int maxPerSameClass = chooseClassesInput.maxPerSameClass();
+
+        Map<CharacterClassType, Integer> chosenClasses;
+        if (!isComputer) {
+            chosenClasses = new HashMap<>();
+            ObjectMapper mapper = new ObjectMapper();
+
+            // We wrap the entirety of handling user input in a try catch
+            try {
+                SendMessage sendMessage = new SendMessage(isZombie, SendMessageType.CHOOSE_CLASSES_PHASE, mapper.valueToTree(chooseClassesInput));
+                client.send(sendMessage);
+
+                String response = client.receive();
+                System.out.println(response);
+                System.out.println(2);
+                chosenClasses = mapper.readValue(response, new TypeReference<>() {
+                });
+                System.out.println(1);
+                System.out.println(chosenClasses);
+            } catch (Exception e) {
+                // do nothing
+            }
+        } else {
+            // Otherwise, for computer, pick one of the valid moves and just do it
+            Random rand = new Random();
+
+            chosenClasses = new HashMap<>();
+
+            int soFar = 0;
+
+            while (soFar < numToPick) {
+                CharacterClassType selected = possibleChoices.get(rand.nextInt(0, possibleChoices.size()));
+                if (!chosenClasses.containsKey(selected)) {
+                    chosenClasses.put(selected, 0);
+                }
+
+                int currentCount = chosenClasses.get(selected);
+                if (currentCount < maxPerSameClass) {
+                    chosenClasses.put(selected, currentCount + 1);
+                    soFar += 1;
+                }
+            }
+        }
+
+        return chosenClasses;
+
     }
 
     public List<MoveAction> getMoveInput(MoveInput moveInput) {
