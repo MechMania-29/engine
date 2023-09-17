@@ -20,15 +20,15 @@ import java.util.Map;
 public class ClientPlayer extends Player {
     private final Client client;
 
-    public ClientPlayer(boolean isZombie, int port) throws IOException {
+    public ClientPlayer(boolean isZombie, int port) {
         super(isZombie);
 
-        client = new Client(port);
+        client = new Client(port, getErrorLogger());
     }
 
     private void handleClientError(GamePhase phase, int turn, Exception e) {
-        System.err.printf("An error occurred handling input of %s player on turn %s during %s phase:\n%s\n",
-                isZombie ? "zombie" : "human", turn, phase, e);
+        getErrorLogger().log(String.format("An error occurred handling input of %s player on turn %s during %s phase:\n%s\n",
+                isZombie ? "zombie" : "human", turn, phase, e));
     }
 
     @Override

@@ -17,6 +17,8 @@ public class Log {
     private LogScores scores;
     @JsonProperty("stats")
     private LogStats stats;
+    @JsonProperty("errors")
+    private LogErrors errors;
     @JsonProperty("turns")
     private List<LogTurnState> turnStates;
 
@@ -33,9 +35,10 @@ public class Log {
         turnStates.add(turnState);
     }
 
-    public void storeResults(LogScores scores, LogStats stats) {
+    public void storeResults(LogScores scores, LogStats stats, LogErrors errors) {
         this.scores = scores;
         this.stats = stats;
+        this.errors = errors;
     }
 
     @Override

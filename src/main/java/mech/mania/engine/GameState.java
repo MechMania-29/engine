@@ -5,6 +5,7 @@ import mech.mania.engine.character.CharacterClassAbility;
 import mech.mania.engine.character.CharacterClassType;
 import mech.mania.engine.character.CharacterState;
 import mech.mania.engine.character.action.*;
+import mech.mania.engine.log.LogErrors;
 import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
 import mech.mania.engine.player.*;
@@ -189,7 +190,7 @@ public class GameState {
         log.storeDiffs(characterStateDiffs, terrainStateDiffs);
 
         if (isFinished()) {
-            log.storeResults(getScores(), getStats());
+            log.storeResults(getScores(), getStats(), getErrors());
         }
     }
 
@@ -223,9 +224,16 @@ public class GameState {
         return new LogStats(turn, getHumansCount(), getZombiesCount());
     }
 
+    private LogErrors getErrors() {
+        return new LogErrors(humanPlayer.getErrorLogger().getLogs(), zombiePlayer.getErrorLogger().getLogs());
+    }
+
     private void handleInvalidInputError(boolean isZombie, GamePhase phase, String got, String expected) {
-        System.err.printf("%s player provided an invalid input on turn %d during %s phase: %s\nExpected (one of): %s\n",
-                isZombie ? "zombie" : "human", turn, phase,got, expected);
+        PlayerErrorLogger errorLogger = isZombie ? zombiePlayer.getErrorLogger() : humanPlayer.getErrorLogger();
+        errorLogger.log(String.format(
+                "%s player provided an invalid input on turn %d during %s phase: %s\nExpected (one of): %s",
+                isZombie ? "zombie" : "human", turn, phase,got, expected
+        ));
     }
 
     private void applyClearActions(Map<String, CharacterState> characterStates) {
