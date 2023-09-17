@@ -22,8 +22,16 @@ public class Client {
         serverSocket = new ServerSocket(port);
         serverSocket.setSoTimeout(TIMEOUT_MILIS_INIT);
 
-        clientSocket = serverSocket.accept();
-        clientSocket.setSoTimeout(TIMEOUT_MILIS_TURN);
+        Socket tempClientSocket = null;
+        try {
+            tempClientSocket = serverSocket.accept();
+            tempClientSocket.setSoTimeout(TIMEOUT_MILIS_TURN);
+        } catch (Exception e) {
+            tempClientSocket = null;
+            System.err.printf("Failed to connect to port %d, %s\n", port, e);
+        }
+
+        clientSocket = tempClientSocket;
     }
 
     private String read() {
