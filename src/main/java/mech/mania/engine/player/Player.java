@@ -13,13 +13,19 @@ import java.util.Map;
 
 public abstract class Player {
     protected boolean isZombie;
+    private final PlayerErrorLogger errorLogger;
 
     public Player(boolean isZombie) {
         this.isZombie = isZombie;
+        this.errorLogger = new PlayerErrorLogger();
     }
 
     public boolean isZombie() {
         return isZombie;
+    }
+
+    public PlayerErrorLogger getErrorLogger() {
+        return errorLogger;
     }
 
     public abstract Map<CharacterClassType, Integer> getChosenClassesInput(ChooseClassesInput chooseClassesInput);

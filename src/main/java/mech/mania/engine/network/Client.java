@@ -1,6 +1,7 @@
 package mech.mania.engine.network;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import mech.mania.engine.player.PlayerErrorLogger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,23 +16,21 @@ import static mech.mania.engine.Config.TIMEOUT_MILIS_TURN;
 
 public class Client {
 
-    private final ServerSocket serverSocket;
-    private final Socket clientSocket;
+    private ServerSocket serverSocket;
+    private Socket clientSocket;
 
-    public Client(int port) throws IOException {
-        serverSocket = new ServerSocket(port);
-        serverSocket.setSoTimeout(TIMEOUT_MILIS_INIT);
-
-        Socket tempClientSocket = null;
+    public Client(int port, PlayerErrorLogger errorLogger) {
+        serverSocket = null;
+        clientSocket = null;
         try {
-            tempClientSocket = serverSocket.accept();
-            tempClientSocket.setSoTimeout(TIMEOUT_MILIS_TURN);
-        } catch (Exception e) {
-            tempClientSocket = null;
-            System.err.printf("Failed to connect to port %d, %s\n", port, e);
-        }
+            serverSocket = new ServerSocket(port);
+            serverSocket.setSoTimeout(TIMEOUT_MILIS_INIT);
 
-        clientSocket = tempClientSocket;
+            clientSocket = serverSocket.accept();
+            clientSocket.setSoTimeout(TIMEOUT_MILIS_TURN);
+        } catch (Exception e) {
+            errorLogger.log(String.format("Failed to connect to port %d, %s", port, e));
+        }
     }
 
     private String read() {
