@@ -24,6 +24,7 @@ public class ComputerPlayer extends Player {
 
     @Override
     public Map<CharacterClassType, Integer> getChosenClassesInput(ChooseClassesInput chooseClassesInput) {
+        logStartAction();
         List<CharacterClassType> possibleChoices = chooseClassesInput.choices();
         int numToPick = chooseClassesInput.numToPick();
         int maxPerSameClass = chooseClassesInput.maxPerSameClass();
@@ -52,6 +53,7 @@ public class ComputerPlayer extends Player {
 
     @Override
     public List<MoveAction> getMoveInput(MoveInput moveInput) {
+        logStartAction();
         Map<String, List<MoveAction>> possibleMoves = moveInput.possibleMoves();
         Map<String, CharacterState> characterStates = moveInput.characterStates();
 
@@ -107,11 +109,14 @@ public class ComputerPlayer extends Player {
             }
         }
 
+        logEndAction();
+
         return moveActions;
     }
 
     @Override
     public List<AttackAction> getAttackInput(AttackInput attackInput) {
+        logStartAction();
         List<AttackAction> attackActions = new ArrayList<>();
         Random rand = new Random();
 
@@ -130,11 +135,14 @@ public class ComputerPlayer extends Player {
             attackActions.add(attackAction);
         }
 
+        logEndAction();
+
         return attackActions;
     }
 
     @Override
     public List<AbilityAction> getAbilityInput(AbilityInput abilityInput) {
+        logStartAction();
         List<AbilityAction> actions = new ArrayList<>();
         Random rand = new Random();
         Map<String, List<AbilityAction>> possibleAbilityActions = abilityInput.possibleAbilities();
@@ -151,6 +159,8 @@ public class ComputerPlayer extends Player {
 
             actions.add(abilityAction);
         }
+
+        logEndAction();
 
         return actions;
     }

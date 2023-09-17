@@ -33,6 +33,7 @@ public class ClientPlayer extends Player {
 
     @Override
     public Map<CharacterClassType, Integer> getChosenClassesInput(ChooseClassesInput chooseClassesInput) {
+        logStartAction();
         ObjectMapper mapper = new ObjectMapper();
 
         // We wrap the entirety of handling user input in a try catch
@@ -47,16 +48,21 @@ public class ClientPlayer extends Player {
                 throw new RuntimeException("Received null, expected a proper response");
             }
 
+            logEndAction();
+
             return chosenClasses;
         } catch (Exception e) {
             handleClientError(GamePhase.CHOOSE_CLASSES, chooseClassesInput.turn(), e);
         }
+
+        logEndAction();
 
         return Map.of();
     }
 
     @Override
     public List<MoveAction> getMoveInput(MoveInput moveInput) {
+        logStartAction();
         ObjectMapper mapper = new ObjectMapper();
 
         // We wrap the entirety of handling user input in a try catch
@@ -71,16 +77,21 @@ public class ClientPlayer extends Player {
                 throw new RuntimeException("Received null, expected a proper response");
             }
 
+            logEndAction();
+
             return moveActions;
         } catch (Exception e) {
             handleClientError(GamePhase.MOVE, moveInput.turn(), e);
         }
+
+        logEndAction();
 
         return List.of();
     }
 
     @Override
     public List<AttackAction> getAttackInput(AttackInput attackInput) {
+        logStartAction();
         ObjectMapper mapper = new ObjectMapper();
 
         // We wrap the entirety of handling user input in a try catch
@@ -95,16 +106,21 @@ public class ClientPlayer extends Player {
                 throw new RuntimeException("Received null, expected a proper response");
             }
 
+            logEndAction();
+
             return attackActions;
         } catch (Exception e) {
             handleClientError(GamePhase.ATTACK, attackInput.turn(), e);
         }
+
+        logEndAction();
 
         return List.of();
     }
 
     @Override
     public List<AbilityAction> getAbilityInput(AbilityInput abilityInput) {
+        logStartAction();
         ObjectMapper mapper = new ObjectMapper();
 
         // We wrap the entirety of handling user input in a try catch
@@ -119,10 +135,14 @@ public class ClientPlayer extends Player {
                 throw new RuntimeException("Received null, expected a proper response");
             }
 
+            logEndAction();
+
             return actions;
         } catch (Exception e) {
             handleClientError(GamePhase.ABILITY, abilityInput.turn(), e);
         }
+
+        logEndAction();
 
         return List.of();
     }
