@@ -90,7 +90,7 @@ public class Engine {
         }
 
         LogScores finalScores = gameState.getScores();
-        LogStats finalStats = new LogStats(gameState.getTurn(), gameState.getHumansCount(), gameState.getZombiesCount());
+        LogStats finalStats = gameState.getStats();
 
         humanPlayer.finish(finalScores, finalStats);
         zombiePlayer.finish(finalScores, finalStats);
