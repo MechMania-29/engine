@@ -109,8 +109,15 @@ public class CharacterState implements Cloneable, Diffable {
         applyClass(CharacterClassType.ZOMBIE);
     }
 
-    public void setHealth(int health) {
-        this.health = health;
+    public void heal() {
+        this.health += 1;
+        if (this.health > MAX_HEALTH) {
+            this.health = MAX_HEALTH;
+        }
+    }
+
+    public void damage() {
+        this.health -= 1;
     }
 
     public void resetAttackCooldownLeft() {

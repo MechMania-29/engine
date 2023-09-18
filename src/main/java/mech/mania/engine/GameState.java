@@ -170,9 +170,9 @@ public class GameState {
 
         // Get player ability input
         Map<String, List<AbilityAction>> possibleAbilityActions = getPossibleAbilityActions(player.isZombie());
-        List<AbilityAction> abilityActions = player.getAbilityInput(
+        List<AbilityAction> abilityActions = !player.isZombie() ? player.getAbilityInput(
                 new AbilityInput(possibleAbilityActions, turn, characterStates, terrainStates)
-        );
+        ) : List.of();
 
         // Apply ability actions
         applyAbilityActions(abilityActions, possibleAbilityActions);
@@ -405,7 +405,7 @@ public class GameState {
                     if (attacking.isZombie()) {
                         continue;
                     }
-                    attacking.setHealth(attacking.getHealth() - 1);
+                    attacking.damage();
 
                     if (attacking.getHealth() == 0) {
                         attacking.makeZombie();
@@ -473,7 +473,7 @@ public class GameState {
                 // Handle healing ability
                 CharacterState healing = characterStates.get(abilityAction.getCharacterIdTarget());
 
-                healing.setHealth(healing.getHealth() + 1);
+                healing.heal();
             } else if (abilityType == AbilityActionType.BUILD_BARRICADE) {
                 // Handle build ability
                 Position newPosition = abilityAction.getPositionalTarget();

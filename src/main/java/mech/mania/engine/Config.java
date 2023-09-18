@@ -64,6 +64,8 @@ public class Config implements Serializable {
             CharacterClassType.MEDIC, CharacterClassType.BUILDER, CharacterClassType.DEMOLITIONIST
     );
 
+    public static final int MAX_HEALTH = 10;
+
     // Other cooldowns
     public static final int ABILITY_COOLDOWN = 6;
 
