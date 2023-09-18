@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.List;
 
 import static mech.mania.engine.Config.STARTING_ZOMBIES;
 import static mech.mania.engine.Config.TOTAL_CHARACTERS;
@@ -16,7 +17,7 @@ public class GameStateTest {
     public void BaseTest() throws IOException {
         Player human = new ComputerPlayer(false);
         Player zombie = new ComputerPlayer(true);
-        GameState gameState = new GameState(human, zombie);
+        GameState gameState = new GameState(human, zombie, List.of());
 
         int zombiesCount = 0;
         int humansCounts = 0;
