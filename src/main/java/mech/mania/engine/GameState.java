@@ -490,7 +490,11 @@ public class GameState {
     private Map<String, Position> getTilesInRange(Position start, int range, boolean isAttack, boolean ignoreBarricades) {
         Map<String, Position> moves = new HashMap<>();
 
-        if (range <= 0) {
+        if (range < 0) {
+            return moves;
+        }
+
+        if (range == 0) {
             moves.put(start.toString(), start.clone());
             return moves;
         }
@@ -561,7 +565,10 @@ public class GameState {
         Map<String, List<MoveAction>> possibleActions = new HashMap<>();
 
         for (CharacterState characterState : controllableCharacterStates.values()) {
-            int range = characterState.canMove() ? characterState.getMoveSpeed() : -1;
+            if (!characterState.canMove()) {
+                continue;
+            }
+            int range = characterState.getMoveSpeed();
             boolean ignoreBarricades = characterState.getAbilities().contains(CharacterClassAbility.MOVE_OVER_BARRICADES);
             Map<String, Position> moves = getTilesInRange(characterState.getPosition(), range, false, ignoreBarricades);
 
@@ -588,7 +595,10 @@ public class GameState {
         Map<String, List<AttackAction>> possibleAttackActions = new HashMap<>();
 
         for (CharacterState characterState : controllableCharacterStates.values()) {
-            int range = characterState.canAttack() ? characterState.getAttackRange() : -1;
+            if (!characterState.canAttack()) {
+                continue;
+            }
+            int range = characterState.getAttackRange();
             Map<String, Position> attackable = getTilesInRange(characterState.getPosition(), range, true, false);
             List<AttackAction> attackActions = new ArrayList<>();
 
@@ -645,8 +655,11 @@ public class GameState {
         Map<String, List<AbilityAction>> possibleActions = new HashMap<>();
 
         for (CharacterState executing : controllableCharacterStates.values()) {
+            if (!executing.canAbility()) {
+                continue;
+            }
             String executingId = executing.getId();
-            int range = executing.canAbility() ? executing.getAttackRange() : -1;
+            int range = executing.getAttackRange();
             Map<String, Position> locations = getTilesInRange(executing.getPosition(), range, false, false);
             List<AbilityAction> actions = new ArrayList<>();
 
