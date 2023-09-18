@@ -1,6 +1,8 @@
 package mech.mania.engine;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import mech.mania.engine.character.CharacterClassAbility;
 import mech.mania.engine.character.CharacterClassType;
 import mech.mania.engine.character.CharacterState;
@@ -20,6 +22,7 @@ import mech.mania.engine.util.Position;
 import mech.mania.engine.log.Log;
 import mech.mania.engine.util.SpreadMap;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,7 +36,7 @@ public class GameState {
     private final Player humanPlayer;
     private final Player zombiePlayer;
 
-    public GameState(Player human, Player zombie) {
+    public GameState(Player human, Player zombie, List<List<Character>> map) {
         log = new Log();
         turn = 0;
         characterStates = new HashMap<>();
@@ -69,20 +72,39 @@ public class GameState {
             characterStateDiffs.put(id, diff);
         }
 
-        // TODO: Load terrain instead of randomly generating it
+        // Load terrain
         Map<String, Map<String, JsonNode>> terrainStateDiffs = new HashMap<>();
-        Random rand = new Random();
-        for (int i = 0; i < 500; i++) {
-            String id = Integer.toString(i);
-            Position position = new Position(rand.nextInt(0, BOARD_SIZE), rand.nextInt(0, BOARD_SIZE));
-            TerrainType terrainType = TERRAIN_TO_GENERATE.get(rand.nextInt(TERRAIN_TO_GENERATE.size()));
-            TerrainData terrainData = TERRAIN_DATAS.get(terrainType);
 
-            TerrainState terrainState = new TerrainState(id, terrainData, position);
-            terrainStates.put(id, terrainState);
+        int i = 0;
+        for (int y = 0; y < map.size(); y++) {
+            List<Character> row = map.get(y);
+            for (int x = 0; x < row.size(); x++) {
+                String id = Integer.toString(i);
 
-            Map<String, JsonNode> diff = terrainState.diff(null);
-            terrainStateDiffs.put(id, diff);
+                Character character = row.get(x);
+
+                if (character == 'e') {
+                    continue;
+                }
+
+                TerrainType terrainType = MAP_CHAR_TO_TERRAIN_TYPE.get(character);
+
+                if (terrainType == null) {
+                    System.err.printf("Error processing map: %s is not a valid terrain type\n", character);
+                    continue;
+                }
+
+                TerrainData terrainData = TERRAIN_DATAS.get(terrainType);
+                Position position = new Position(x, y);
+
+                TerrainState terrainState = new TerrainState(id, terrainData, position);
+                terrainStates.put(id, terrainState);
+
+                Map<String, JsonNode> diff = terrainState.diff(null);
+                terrainStateDiffs.put(id, diff);
+
+                i += 1;
+            }
         }
 
         log.storeDiffs(characterStateDiffs, terrainStateDiffs);

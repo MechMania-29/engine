@@ -86,8 +86,11 @@ public class Config implements Serializable {
             TerrainType.RIVER, new TerrainData(TerrainType.RIVER, "river", true, -1) // -1 makes invincible
     );
 
-    // TODO: Remove this, for now just randomly generate from this terrain
-    public static final List<TerrainType> TERRAIN_TO_GENERATE = List.of(TerrainType.WALL, TerrainType.TREE, TerrainType.RIVER);
+    public static final Map<Character, TerrainType> MAP_CHAR_TO_TERRAIN_TYPE = Map.of(
+            'w', TerrainType.WALL,
+            't', TerrainType.TREE,
+            'r', TerrainType.RIVER
+    );
 
     // Networking
     public static final int TIMEOUT_MILIS_INIT = 15 * 1000; // The timeout for initial connection
