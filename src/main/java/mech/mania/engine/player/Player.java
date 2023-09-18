@@ -4,6 +4,7 @@ import mech.mania.engine.character.CharacterClassType;
 import mech.mania.engine.character.action.AbilityAction;
 import mech.mania.engine.character.action.AttackAction;
 import mech.mania.engine.character.action.MoveAction;
+import mech.mania.engine.log.LogErrors;
 import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
 import mech.mania.engine.player.input.*;
@@ -52,5 +53,5 @@ public abstract class Player {
 
     public abstract List<AbilityAction> getAbilityInput(AbilityInput abilityInput);
 
-    public abstract void finish(LogScores scores, LogStats stats);
+    public abstract void finish(LogScores scores, LogStats stats, LogErrors errors);
 }

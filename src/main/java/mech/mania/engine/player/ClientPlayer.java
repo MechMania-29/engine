@@ -6,6 +6,7 @@ import mech.mania.engine.character.CharacterClassType;
 import mech.mania.engine.character.action.AbilityAction;
 import mech.mania.engine.character.action.AttackAction;
 import mech.mania.engine.character.action.MoveAction;
+import mech.mania.engine.log.LogErrors;
 import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
 import mech.mania.engine.network.Client;
@@ -27,7 +28,7 @@ public class ClientPlayer extends Player {
     }
 
     private void handleClientError(GamePhase phase, int turn, Exception e) {
-        getErrorLogger().log(String.format("An error occurred handling input of %s player on turn %s during %s phase:\n%s\n",
+        getErrorLogger().log(String.format("An error occurred handling input of %s player on turn %s during %s phase:\n%s",
                 isZombie ? "zombie" : "human", turn, phase, e));
     }
 
@@ -148,13 +149,13 @@ public class ClientPlayer extends Player {
     }
 
     @Override
-    public void finish(LogScores scores, LogStats stats) {
+    public void finish(LogScores scores, LogStats stats, LogErrors errors) {
         if (client == null) return;
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
 
-            FinishInput finishInput = new FinishInput(scores, stats, stats.turns());
+            FinishInput finishInput = new FinishInput(scores, stats, errors, stats.turns());
             client.send(new SendMessage(isZombie, GamePhase.FINISH, objectMapper.valueToTree(finishInput)));
 
             client.close();

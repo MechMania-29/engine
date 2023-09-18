@@ -250,7 +250,7 @@ public class GameState {
         return new LogStats(turn, humansCount, zombiesCount, humansAverageTime, zombiesAverageTime);
     }
 
-    private LogErrors getErrors() {
+    public LogErrors getErrors() {
         return new LogErrors(humanPlayer.getErrorLogger().getLogs(), zombiePlayer.getErrorLogger().getLogs());
     }
 

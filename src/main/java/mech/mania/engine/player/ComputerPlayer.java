@@ -5,6 +5,7 @@ import mech.mania.engine.character.CharacterState;
 import mech.mania.engine.character.action.AbilityAction;
 import mech.mania.engine.character.action.AttackAction;
 import mech.mania.engine.character.action.MoveAction;
+import mech.mania.engine.log.LogErrors;
 import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
 import mech.mania.engine.player.input.*;
@@ -166,7 +167,7 @@ public class ComputerPlayer extends Player {
     }
 
     @Override
-    public void finish(LogScores scores, LogStats stats) {
+    public void finish(LogScores scores, LogStats stats, LogErrors errors) {
         // Does nothing for computer
     }
 }
