@@ -2,6 +2,7 @@ package mech.mania.engine;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import mech.mania.engine.log.LogErrors;
 import mech.mania.engine.log.LogScores;
 import mech.mania.engine.log.LogStats;
 import mech.mania.engine.player.ClientPlayer;
@@ -98,9 +99,10 @@ public class Engine {
 
         LogScores finalScores = gameState.getScores();
         LogStats finalStats = gameState.getStats();
+        LogErrors finalErrors = gameState.getErrors();
 
-        humanPlayer.finish(finalScores, finalStats);
-        zombiePlayer.finish(finalScores, finalStats);
+        humanPlayer.finish(finalScores, finalStats, finalErrors);
+        zombiePlayer.finish(finalScores, finalStats, finalErrors);
 
         System.out.printf("Game finished on turn %d with %d humans and %d zombies, %d-%d (H-Z)\n",
                 gameState.getTurn(), finalStats.humansLeft(), finalStats.zombiesLeft(),
