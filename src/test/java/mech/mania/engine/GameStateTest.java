@@ -73,7 +73,7 @@ public class GameStateTest {
 
         Position center = new Position(BOARD_SIZE / 2, BOARD_SIZE / 2);
         Map<String, Position> range0Expected = Map.of(center.toString(), center);
-        Map<String, Position> range0 = empty.getTilesInRange(center, 0, false, false);
+        Map<String, Position> range0 = empty.getTilesInRange(center, 0, false, false, false);
 
         assertMapsEqual(range0Expected, range0);
 
@@ -84,7 +84,7 @@ public class GameStateTest {
                 new Position(center.getX(), center.getY() + 1),
                 new Position(center.getX(), center.getY() - 1)
         ).collect(Collectors.toMap(Position::toString, pos -> pos));
-        Map<String, Position> range1 = empty.getTilesInRange(center, 1, false, false);
+        Map<String, Position> range1 = empty.getTilesInRange(center, 1, false, false, false);
 
         assertMapsEqual(range1Expected, range1);
 
@@ -103,9 +103,37 @@ public class GameStateTest {
                 new Position(center.getX(), center.getY() + 2),
                 new Position(center.getX(), center.getY() - 2)
         ).collect(Collectors.toMap(Position::toString, pos -> pos));
-        Map<String, Position> range2 = empty.getTilesInRange(center, 2, false, false);
+        Map<String, Position> range2 = empty.getTilesInRange(center, 2, false, false, false);
 
         assertMapsEqual(range2Expected, range2);
+    }
+
+    @Test
+    public void getTilesInRangeDiagonalTest() {
+        Player human = new ComputerPlayer(false);
+        Player zombie = new ComputerPlayer(true);
+        GameState empty = new GameState(human, zombie, List.of());
+
+        Position center = new Position(BOARD_SIZE / 2, BOARD_SIZE / 2);
+        Map<String, Position> range0Expected = Map.of(center.toString(), center);
+        Map<String, Position> range0 = empty.getTilesInRange(center, 0, true, false, false);
+
+        assertMapsEqual(range0Expected, range0);
+
+        Map<String, Position> range1Expected = Stream.of(
+                center,
+                new Position(center.getX() + 1, center.getY()),
+                new Position(center.getX() - 1, center.getY()),
+                new Position(center.getX(), center.getY() + 1),
+                new Position(center.getX(), center.getY() - 1),
+                new Position(center.getX() + 1, center.getY() + 1),
+                new Position(center.getX() - 1, center.getY() - 1),
+                new Position(center.getX() - 1, center.getY() + 1),
+                new Position(center.getX() + 1, center.getY() - 1)
+        ).collect(Collectors.toMap(Position::toString, pos -> pos));
+        Map<String, Position> range1 = empty.getTilesInRange(center, 1, true, false, false);
+
+        assertMapsEqual(range1Expected, range1);
     }
 
     @Test
@@ -123,7 +151,7 @@ public class GameStateTest {
 
         Position middle = new Position(1, 1);
         Map<String, Position> rangeExpected = Map.of(middle.toString(), middle);
-        Map<String, Position> range = empty.getTilesInRange(middle, 5, false, false);
+        Map<String, Position> range = empty.getTilesInRange(middle, 5, false, false, false);
 
         assertMapsEqual(rangeExpected, range);
     }

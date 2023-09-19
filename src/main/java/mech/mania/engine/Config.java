@@ -80,6 +80,18 @@ public class Config implements Serializable {
             new Position(-1, 0) // LEFT
     );
 
+    // Directions that zombies can attack or other uses of diagonal directions
+    public static final List<Position> DIAGONAL_DIRECTIONS = Arrays.asList(
+            new Position(0, 1), // DOWN
+            new Position(0, -1), // UP
+            new Position(1, 0), // RIGHT
+            new Position(-1, 0), // LEFT
+            new Position(1, 1), // DOWN RIGHT
+            new Position(-1, -1), // UP LEFT
+            new Position(1, -1), // UP RIGHT
+            new Position(-1, 1) // DOWN LEFT
+    );
+
     // These are the various ids for terrain. Likely will need to be updated.
     public static final Map<TerrainType, TerrainData> TERRAIN_DATAS = Map.of(
             TerrainType.WALL, new TerrainData(TerrainType.WALL, "wall", false, 3),

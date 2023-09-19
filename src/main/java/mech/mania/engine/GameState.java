@@ -520,7 +520,7 @@ public class GameState {
         return canTraverseThrough;
     }
 
-    protected Map<String, Position> getTilesInRange(Position start, int range, boolean isAttack, boolean ignoreBarricades) {
+    protected Map<String, Position> getTilesInRange(Position start, int range, boolean diagonal, boolean isAttack, boolean ignoreBarricades) {
         Map<String, Position> moves = new HashMap<>();
 
         if (range < 0) {
@@ -535,7 +535,9 @@ public class GameState {
             return moves;
         }
 
-        for (Position direction : DIRECTIONS) {
+        List<Position> directions = diagonal ? DIAGONAL_DIRECTIONS : DIRECTIONS;
+
+        for (Position direction : directions) {
             Position newPosition = start.clone();
             newPosition.add(direction);
             String key = newPosition.toString();
@@ -551,7 +553,7 @@ public class GameState {
             moves.put(key, newPosition);
 
             // Recursively check for next moves
-            Map<String, Position> fromThere = getTilesInRange(newPosition, range - 1, isAttack, ignoreBarricades);
+            Map<String, Position> fromThere = getTilesInRange(newPosition, range - 1, diagonal, isAttack, ignoreBarricades);
 
             moves.putAll(fromThere);
         }
@@ -578,7 +580,7 @@ public class GameState {
             }
             int range = characterState.getMoveSpeed();
             boolean ignoreBarricades = characterState.getAbilities().contains(CharacterClassAbility.MOVE_OVER_BARRICADES);
-            Map<String, Position> moves = getTilesInRange(characterState.getPosition(), range, false, ignoreBarricades);
+            Map<String, Position> moves = getTilesInRange(characterState.getPosition(), range, false, false, ignoreBarricades);
 
             possibleActions.put(characterState.getId(),
                     moves.values().stream()
@@ -607,7 +609,7 @@ public class GameState {
                 continue;
             }
             int range = characterState.getAttackRange();
-            Map<String, Position> attackable = getTilesInRange(characterState.getPosition(), range, true, false);
+            Map<String, Position> attackable = getTilesInRange(characterState.getPosition(), range, isZombie, true, false);
             List<AttackAction> attackActions = new ArrayList<>();
 
             // Handle attackable enemies
@@ -668,7 +670,7 @@ public class GameState {
             }
             String executingId = executing.getId();
             int range = executing.getAttackRange();
-            Map<String, Position> locations = getTilesInRange(executing.getPosition(), range, false, false);
+            Map<String, Position> locations = getTilesInRange(executing.getPosition(), range, false, false, false);
             List<AbilityAction> actions = new ArrayList<>();
 
             for (Position location : locations.values()) {
