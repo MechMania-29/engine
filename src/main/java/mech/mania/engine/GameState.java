@@ -41,6 +41,8 @@ public class GameState {
         turn = 0;
         characterStates = new HashMap<>();
         terrainStates = new HashMap<>();
+        humanPlayer = human;
+        zombiePlayer = zombie;
         Map<String, Map<String, JsonNode>> characterStateDiffs = new HashMap<>();
 
         // Create characters
@@ -75,11 +77,11 @@ public class GameState {
         // Load terrain
         Map<String, Map<String, JsonNode>> terrainStateDiffs = new HashMap<>();
 
-        int i = 0;
         for (int y = 0; y < map.size(); y++) {
             List<Character> row = map.get(y);
             for (int x = 0; x < row.size(); x++) {
-                String id = Integer.toString(i);
+                Position position = new Position(x, y);
+                String id = position.toString();
 
                 Character character = row.get(x);
 
@@ -95,22 +97,16 @@ public class GameState {
                 }
 
                 TerrainData terrainData = TERRAIN_DATAS.get(terrainType);
-                Position position = new Position(x, y);
 
                 TerrainState terrainState = new TerrainState(id, terrainData, position);
                 terrainStates.put(id, terrainState);
 
                 Map<String, JsonNode> diff = terrainState.diff(null);
                 terrainStateDiffs.put(id, diff);
-
-                i += 1;
             }
         }
 
         log.storeDiffs(characterStateDiffs, terrainStateDiffs);
-
-        this.humanPlayer = human;
-        this.zombiePlayer = zombie;
     };
 
     public Map<String, CharacterState> getCharacterStates() {
@@ -477,7 +473,13 @@ public class GameState {
             } else if (abilityType == AbilityActionType.BUILD_BARRICADE) {
                 // Handle build ability
                 Position newPosition = abilityAction.getPositionalTarget();
-                String newId = Integer.toString(terrainStates.size());
+
+                // Must not already be something there
+                String newId = newPosition.toString();
+                if (terrainStates.containsKey(newId)) {
+                    continue;
+                }
+
                 TerrainData newData = TERRAIN_DATAS.get(TerrainType.BARRICADE);
 
                 terrainStates.put(newId, new TerrainState(newId, newData, newPosition));
@@ -487,6 +489,37 @@ public class GameState {
         }
     }
 
+    private boolean canTravelThrough(Position pos, boolean isAttack, boolean ignoreBarricades) {
+        String key = pos.toString();
+
+        // Check in bounds
+        if (!pos.inBounds()) {
+            return false;
+        }
+
+        // Check not terrain
+        boolean canTraverseThrough = true;
+
+        boolean exists = terrainStates.containsKey(key);
+        if (exists) {
+            canTraverseThrough = false;
+            TerrainState terrainState = terrainStates.get(key);
+            if (terrainState.isDestroyed()) {
+                canTraverseThrough = true;
+            }
+
+            if (isAttack && terrainState.canAttackThrough()) {
+                canTraverseThrough = true;
+            }
+
+            if (!isAttack && ignoreBarricades && terrainState.getType() == TerrainType.BARRICADE) {
+                canTraverseThrough = true;
+            }
+        }
+
+        return canTraverseThrough;
+    }
+
     protected Map<String, Position> getTilesInRange(Position start, int range, boolean isAttack, boolean ignoreBarricades) {
         Map<String, Position> moves = new HashMap<>();
 
@@ -494,7 +527,9 @@ public class GameState {
             return moves;
         }
 
-        moves.put(start.toString(), start.clone());
+        if (canTravelThrough(start, isAttack, ignoreBarricades)) {
+            moves.put(start.toString(), start);
+        }
 
         if (range == 0) {
             return moves;
@@ -505,48 +540,20 @@ public class GameState {
             newPosition.add(direction);
             String key = newPosition.toString();
 
-            // Check in bounds
-            if (!newPosition.inBounds()) {
-                continue;
-            }
+            // Validate is allowed
+            boolean allowed = canTravelThrough(newPosition, isAttack, ignoreBarricades);
 
-            // Check not terrain
-            boolean canTraverseThrough = true;
-
-            boolean exists = terrainStates.containsKey(key);
-            if (exists) {
-                canTraverseThrough = false;
-                TerrainState terrainState = terrainStates.get(key);
-                if (terrainState.isDestroyed()) {
-                    canTraverseThrough = true;
-                }
-
-                if (isAttack && terrainState.canAttackThrough()) {
-                    canTraverseThrough = true;
-                }
-
-                if (!isAttack && ignoreBarricades && terrainState.getType() == TerrainType.BARRICADE) {
-                    canTraverseThrough = true;
-                }
-            }
-
-            if (!canTraverseThrough) {
+            if (!allowed) {
                 continue;
             }
 
             // If not already added, add it
-            if (!moves.containsKey(key)) {
-                moves.put(key, newPosition);
-            }
+            moves.put(key, newPosition);
 
             // Recursively check for next moves
             Map<String, Position> fromThere = getTilesInRange(newPosition, range - 1, isAttack, ignoreBarricades);
 
-            fromThere.forEach((fromThereKey, fromThereNewPosition) -> {
-                if (!moves.containsKey(fromThereKey)) {
-                    moves.put(fromThereKey, fromThereNewPosition);
-                }
-            });
+            moves.putAll(fromThere);
         }
 
         return moves;

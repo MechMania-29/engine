@@ -66,7 +66,7 @@ public class GameStateTest {
     }
 
     @Test
-    public void getTilesInRangeTest() {
+    public void getTilesInRangeBasicTest() {
         Player human = new ComputerPlayer(false);
         Player zombie = new ComputerPlayer(true);
         GameState empty = new GameState(human, zombie, List.of());
@@ -106,5 +106,25 @@ public class GameStateTest {
         Map<String, Position> range2 = empty.getTilesInRange(center, 2, false, false);
 
         assertMapsEqual(range2Expected, range2);
+    }
+
+    @Test
+    public void getTilesInRangeTerrainTest() {
+        Player human = new ComputerPlayer(false);
+        Player zombie = new ComputerPlayer(true);
+
+        List<List<Character>> map = List.of(
+                "rrr".chars().mapToObj(ch -> (char) ch).toList(),
+                "rer".chars().mapToObj(ch -> (char) ch).toList(),
+                "rrr".chars().mapToObj(ch -> (char) ch).toList()
+        );
+
+        GameState empty = new GameState(human, zombie, map);
+
+        Position middle = new Position(1, 1);
+        Map<String, Position> rangeExpected = Map.of(middle.toString(), middle);
+        Map<String, Position> range = empty.getTilesInRange(middle, 5, false, false);
+
+        assertMapsEqual(rangeExpected, range);
     }
 }
