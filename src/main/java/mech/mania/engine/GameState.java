@@ -1,8 +1,6 @@
 package mech.mania.engine;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import mech.mania.engine.character.CharacterClassAbility;
 import mech.mania.engine.character.CharacterClassType;
 import mech.mania.engine.character.CharacterState;
@@ -22,7 +20,6 @@ import mech.mania.engine.util.Position;
 import mech.mania.engine.log.Log;
 import mech.mania.engine.util.SpreadMap;
 
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -489,35 +486,42 @@ public class GameState {
         }
     }
 
-    private boolean canTravelThrough(Position pos, boolean isAttack, boolean ignoreBarricades) {
+    private TerrainState getBlockingTerrain(Position pos, boolean ignoreBarricades) {
         String key = pos.toString();
 
+        // Check existing terrain
+        TerrainState blocking = null;
+
+        boolean exists = terrainStates.containsKey(key);
+        if (exists) {
+            TerrainState terrainState = terrainStates.get(key);
+            blocking = terrainState;
+            if (terrainState.isDestroyed()) {
+                blocking = null;
+            }
+
+            if (ignoreBarricades && terrainState.getType() == TerrainType.BARRICADE) {
+                blocking = null;
+            }
+        }
+
+        return blocking;
+    }
+
+    private boolean canTraverseThrough(Position pos, boolean isAttack, boolean ignoreBarricades) {
         // Check in bounds
         if (!pos.inBounds()) {
             return false;
         }
 
-        // Check not terrain
-        boolean canTraverseThrough = true;
+        // Check blocking
+        TerrainState blocking = getBlockingTerrain(pos, ignoreBarricades && isAttack);
 
-        boolean exists = terrainStates.containsKey(key);
-        if (exists) {
-            canTraverseThrough = false;
-            TerrainState terrainState = terrainStates.get(key);
-            if (terrainState.isDestroyed()) {
-                canTraverseThrough = true;
-            }
-
-            if (isAttack && terrainState.canAttackThrough()) {
-                canTraverseThrough = true;
-            }
-
-            if (!isAttack && ignoreBarricades && terrainState.getType() == TerrainType.BARRICADE) {
-                canTraverseThrough = true;
-            }
+        if (isAttack && blocking.canAttackThrough()) {
+            return true;
         }
 
-        return canTraverseThrough;
+        return blocking == null;
     }
 
     protected Map<String, Position> getTilesInRange(Position start, int range, boolean diagonal, boolean isAttack, boolean ignoreBarricades) {
@@ -527,11 +531,10 @@ public class GameState {
             return moves;
         }
 
-        if (canTravelThrough(start, isAttack, ignoreBarricades)) {
-            moves.put(start.toString(), start);
-        }
+        TerrainState startBlocking = getBlockingTerrain(start, ignoreBarricades && isAttack);
+        moves.put(start.toString(), start);
 
-        if (range == 0) {
+        if (range == 0 || startBlocking != null) {
             return moves;
         }
 
@@ -543,7 +546,7 @@ public class GameState {
             String key = newPosition.toString();
 
             // Validate is allowed
-            boolean allowed = canTravelThrough(newPosition, isAttack, ignoreBarricades);
+            boolean allowed = canTraverseThrough(newPosition, isAttack, ignoreBarricades);
 
             if (!allowed) {
                 continue;

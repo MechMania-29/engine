@@ -142,17 +142,30 @@ public class GameStateTest {
         Player zombie = new ComputerPlayer(true);
 
         List<List<Character>> map = List.of(
-                "rrr".chars().mapToObj(ch -> (char) ch).toList(),
-                "rer".chars().mapToObj(ch -> (char) ch).toList(),
-                "rrr".chars().mapToObj(ch -> (char) ch).toList()
+                "rrrrr".chars().mapToObj(ch -> (char) ch).toList(),
+                "rrrrr".chars().mapToObj(ch -> (char) ch).toList(),
+                "rrerr".chars().mapToObj(ch -> (char) ch).toList(),
+                "rrrrr".chars().mapToObj(ch -> (char) ch).toList(),
+                "rrrrr".chars().mapToObj(ch -> (char) ch).toList()
         );
 
         GameState empty = new GameState(human, zombie, map);
 
-        Position middle = new Position(1, 1);
+        Position middle = new Position(2, 2);
         Map<String, Position> rangeExpected = Map.of(middle.toString(), middle);
         Map<String, Position> range = empty.getTilesInRange(middle, 5, false, false, false);
 
         assertMapsEqual(rangeExpected, range);
+
+        Map<String, Position> rangeAttackExpected = Stream.of(
+                middle,
+                new Position(middle.getX() + 1, middle.getY()),
+                new Position(middle.getX() - 1, middle.getY()),
+                new Position(middle.getX(), middle.getY() + 1),
+                new Position(middle.getX(), middle.getY() - 1)
+        ).collect(Collectors.toMap(Position::toString, pos -> pos));
+        Map<String, Position> rangeAttack = empty.getTilesInRange(middle, 5, false, true, false);
+
+        assertMapsEqual(rangeAttackExpected, rangeAttack);
     }
 }
