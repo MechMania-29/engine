@@ -487,15 +487,16 @@ public class GameState {
         }
     }
 
-    private Map<String, Position> getTilesInRange(Position start, int range, boolean isAttack, boolean ignoreBarricades) {
+    protected Map<String, Position> getTilesInRange(Position start, int range, boolean isAttack, boolean ignoreBarricades) {
         Map<String, Position> moves = new HashMap<>();
 
         if (range < 0) {
             return moves;
         }
 
+        moves.put(start.toString(), start.clone());
+
         if (range == 0) {
-            moves.put(start.toString(), start.clone());
             return moves;
         }
 
