@@ -109,6 +109,9 @@ public class GameState {
     public Map<String, CharacterState> getCharacterStates() {
         return characterStates;
     }
+    public Map<String, TerrainState> getTerrainStates() {
+        return terrainStates;
+    }
 
     public Log getLog() {
         return log;
@@ -662,7 +665,7 @@ public class GameState {
         return possibleAttackActions;
     }
 
-    private Map<String, List<AbilityAction>> getPossibleAbilityActions(boolean isZombie) {
+    protected Map<String, List<AbilityAction>> getPossibleAbilityActions(boolean isZombie) {
         // Get controllable character states
         Map<String, CharacterState> controllableCharacterStates = new HashMap<>();
 
@@ -684,23 +687,23 @@ public class GameState {
             Map<String, Position> locations = getTilesInRange(executing.getPosition(), range, false, false, false);
             List<AbilityAction> actions = new ArrayList<>();
 
-            for (Position location : locations.values()) {
-                if (executing.getAbilities().contains(CharacterClassAbility.HEAL)) {
-                    Optional<CharacterState> targetMaybe = characterStates.values().stream().filter(pos -> pos.getPosition().equals(location)).findFirst();
+            if (executing.getAbilities().contains(CharacterClassAbility.HEAL)) {
+                for (Position location : locations.values()) {
+                    List<CharacterState> targets = characterStates.values().stream().filter(pos -> pos.getPosition().equals(location)).toList();
 
-                    if (targetMaybe.isEmpty()) {
-                        continue;
+                    for (CharacterState target : targets) {
+                        String targetId = target.getId();
+
+                        if (Objects.equals(targetId, executingId) || target.isZombie() != executing.isZombie()) {
+                            continue;
+                        }
+
+                        actions.add(new AbilityAction(executingId, AbilityActionType.HEAL, null, targetId));
                     }
-
-                    CharacterState target = targetMaybe.get();
-                    String targetId = target.getId();
-
-                    if (Objects.equals(targetId, executingId)) {
-                        continue;
-                    }
-
-                    actions.add(new AbilityAction(executingId, AbilityActionType.HEAL, null, targetId));
-                } else if (executing.getAbilities().contains(CharacterClassAbility.BUILD_BARRICADE)) {
+                }
+            }
+            if (executing.getAbilities().contains(CharacterClassAbility.BUILD_BARRICADE)) {
+                for (Position location : locations.values()) {
                     long characterOccupying = characterStates.values().stream().filter(characterState -> characterState.getPosition().equals(location)).count();
 
                     if (characterOccupying > 0) {
@@ -719,6 +722,7 @@ public class GameState {
 
             possibleActions.put(executingId, actions);
         }
+
 
         return possibleActions;
     }
