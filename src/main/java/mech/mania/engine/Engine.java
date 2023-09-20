@@ -8,6 +8,8 @@ import mech.mania.engine.log.LogStats;
 import mech.mania.engine.player.ClientPlayer;
 import mech.mania.engine.player.ComputerPlayer;
 import mech.mania.engine.player.Player;
+import mech.mania.engine.terrain.MapLoader;
+import mech.mania.engine.terrain.SelectedMap;
 
 import java.io.*;
 import java.time.LocalDateTime;
@@ -76,9 +78,7 @@ public class Engine {
         }
 
         System.out.println("Loading map...");
-        ObjectMapper objectMapper = new ObjectMapper();
-        InputStream is = Engine.class.getResourceAsStream("/map.json");
-        List<List<Character>> map = objectMapper.readValue(is, new TypeReference<>() {});
+        List<List<Character>> map = MapLoader.LoadMap(SelectedMap.MAIN);
 
         System.out.println("Connecting clients...");
 
