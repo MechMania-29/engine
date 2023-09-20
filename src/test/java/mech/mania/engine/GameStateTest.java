@@ -1,7 +1,12 @@
 package mech.mania.engine;
 
 import mech.mania.engine.GameState;
+import mech.mania.engine.character.CharacterClassData;
+import mech.mania.engine.character.CharacterClassType;
 import mech.mania.engine.character.CharacterState;
+import mech.mania.engine.character.action.AttackAction;
+import mech.mania.engine.character.action.AttackActionType;
+import mech.mania.engine.character.action.MoveAction;
 import mech.mania.engine.player.ComputerPlayer;
 import mech.mania.engine.player.Player;
 import mech.mania.engine.util.Position;
@@ -9,6 +14,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -148,20 +154,22 @@ public class GameStateTest {
         Player zombie = new ComputerPlayer(true);
 
         List<List<Character>> map = List.of(
-                "rrrrr".chars().mapToObj(ch -> (char) ch).toList(),
-                "rrrrr".chars().mapToObj(ch -> (char) ch).toList(),
-                "rrerr".chars().mapToObj(ch -> (char) ch).toList(),
-                "rrrrr".chars().mapToObj(ch -> (char) ch).toList(),
-                "rrrrr".chars().mapToObj(ch -> (char) ch).toList()
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttett".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList()
         );
 
-        GameState empty = new GameState(human, zombie, map);
+        GameState game = new GameState(human, zombie, map);
 
         Position middle = new Position(2, 2);
         Map<String, Position> rangeExpected = Map.of(middle.toString(), middle);
-        Map<String, Position> range = empty.getTilesInRange(middle, 5, false, false, false);
+        Map<String, Position> range1 = game.getTilesInRange(middle, 1, false, false, false);
+        Map<String, Position> range5 = game.getTilesInRange(middle, 5, false, false, false);
 
-        assertMapsEqual(rangeExpected, range);
+        assertMapsEqual(rangeExpected, range1);
+        assertMapsEqual(rangeExpected, range5);
 
         Map<String, Position> rangeAttackExpected = Stream.of(
                 middle,
@@ -170,8 +178,97 @@ public class GameStateTest {
                 new Position(middle.getX(), middle.getY() + 1),
                 new Position(middle.getX(), middle.getY() - 1)
         ).collect(Collectors.toMap(Position::toString, pos -> pos));
-        Map<String, Position> rangeAttack = empty.getTilesInRange(middle, 5, false, true, false);
+        Map<String, Position> rangeAttack1 = game.getTilesInRange(middle, 1, false, true, false);
+        Map<String, Position> rangeAttack5 = game.getTilesInRange(middle, 5, false, true, false);
 
-        assertMapsEqual(rangeAttackExpected, rangeAttack);
+        assertMapsEqual(rangeAttackExpected, rangeAttack1);
+        assertMapsEqual(rangeAttackExpected, rangeAttack5);
+    }
+
+    private <T> void assertListContentsEqual(List<T> expected, List<T> got) {
+        assertEquals(expected.size(), got.size(), String.format("Lists have different sizes: expected: %s, got: %s", expected, got));
+
+        for (T value : expected) {
+            boolean exists = false;
+            for (T value2 : got) {
+                if (value2.equals(value)) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (!exists) {
+                assertEquals(value, null, String.format("Got has missing value: expected: %s, got: %s", expected, got));
+                return;
+            }
+        }
+
+
+        for (T value : got) {
+            boolean exists = false;
+            for (T value2 : expected) {
+                if (value2.equals(value)) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (!exists) {
+                assertEquals(null, value, String.format("Got has extra value: expected: %s, got: %s", expected, got));
+                return;
+            }
+        }
+    }
+
+    @Test
+    public void getPossibleAttackActionsTest() {
+
+        Player humanPlayer = new ComputerPlayer(false);
+        Player zombiePlayer = new ComputerPlayer(true);
+
+        List<List<Character>> map = List.of(
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+                "teeet".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList()
+        );
+
+        GameState game = new GameState(humanPlayer, zombiePlayer, map);
+        Position center = new Position(2,2);
+        Position up1 = new Position(center.getX(), center.getY() - 1);
+        Position down1 = new Position(center.getX(), center.getY() + 1);
+
+        // remove all characters
+        game.getCharacterStates().clear();
+
+        CharacterState human = new CharacterState("123", center, false, CharacterClassType.NORMAL);
+        CharacterState zombie = new CharacterState("456", center, true, CharacterClassType.ZOMBIE);
+
+        game.getCharacterStates().put(human.getId(), human);
+        game.getCharacterStates().put(zombie.getId(), zombie);
+
+        human.applyClassData(new CharacterClassData(1, 1, 0, 0, List.of()));
+        List<AttackAction> attack0Expected = List.of(
+                new AttackAction(human.getId(), zombie.getId(), AttackActionType.CHARACTER)
+        );
+        List<AttackAction> attack0 = game.getPossibleAttackActions(false).get(human.getId());
+        assertListContentsEqual(attack0Expected, attack0);
+
+        zombie.applyClassData(new CharacterClassData(1, 1, 0, 0, List.of()));
+        List<AttackAction> attackZombie0Expected = List.of(
+                new AttackAction(zombie.getId(), human.getId(), AttackActionType.CHARACTER)
+        );
+        List<AttackAction> attackZombie0 = game.getPossibleAttackActions(true).get(zombie.getId());
+        assertListContentsEqual(attackZombie0Expected, attackZombie0);
+
+        human.applyClassData(new CharacterClassData(1, 1, 1, 0, List.of()));
+        List<AttackAction> attack1Expected = List.of(
+                new AttackAction(human.getId(), zombie.getId(), AttackActionType.CHARACTER),
+                new AttackAction(human.getId(), up1.toString(), AttackActionType.TERRAIN),
+                new AttackAction(human.getId(), down1.toString(), AttackActionType.TERRAIN)
+        );
+        List<AttackAction> attack1 = game.getPossibleAttackActions(false).get(human.getId());
+        assertListContentsEqual(attack1Expected, attack1);
     }
 }

@@ -97,6 +97,10 @@ public class CharacterState implements Cloneable, Diffable {
             throw new RuntimeException(String.format("Invalid classType '%s'", classType.toString()));
         }
 
+        applyClassData(classData);
+    }
+
+    public void applyClassData(CharacterClassData classData) {
         this.health = classData.health();
         this.moveSpeed = classData.moveSpeed();
         this.attackRange = classData.attackRange();

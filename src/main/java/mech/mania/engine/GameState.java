@@ -536,10 +536,10 @@ public class GameState {
             return moves;
         }
 
-        TerrainState startBlocking = getBlockingTerrain(start, ignoreBarricades && isAttack);
+        boolean canTraverseThroughStart = canTraverseThrough(start, isAttack, ignoreBarricades);
         moves.put(start.toString(), start);
 
-        if (range == 0 || startBlocking != null) {
+        if (range == 0 || !canTraverseThroughStart) {
             return moves;
         }
 
@@ -550,11 +550,14 @@ public class GameState {
             newPosition.add(direction);
             String key = newPosition.toString();
 
-            // Validate is allowed
-            boolean allowed = canTraverseThrough(newPosition, isAttack, ignoreBarricades);
+            // Only validate branching out if not attack
+            // This is because we can attack something that blocks our path, but not move through it
+            if (!isAttack) {
+                boolean canTraverse = canTraverseThrough(newPosition, isAttack, ignoreBarricades);
 
-            if (!allowed) {
-                continue;
+                if (!canTraverse) {
+                    continue;
+                }
             }
 
             // If not already added, add it
@@ -599,7 +602,7 @@ public class GameState {
 
         return possibleActions;
     }
-    private Map<String, List<AttackAction>> getPossibleAttackActions(boolean isZombie) {
+    protected Map<String, List<AttackAction>> getPossibleAttackActions(boolean isZombie) {
         // Get controllable character states
         Map<String, CharacterState> controllableCharacterStates = new HashMap<>();
 
