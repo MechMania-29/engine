@@ -339,7 +339,7 @@ public class GameState {
             // Check if possible
             boolean possible = false;
             for (MoveAction possibleMove : possibleMoves) {
-                if (moveAction.getDestination().equals(possibleMove.getDestination())) {
+                if (moveAction.equals(possibleMove)) {
                     possible = true;
                     break;
                 }
@@ -572,7 +572,7 @@ public class GameState {
         return moves;
     }
 
-    private Map<String, List<MoveAction>> getPossibleMoveActions(boolean isZombie) {
+    protected Map<String, List<MoveAction>> getPossibleMoveActions(boolean isZombie) {
         // Get controllable character states
         Map<String, CharacterState> controllableCharacterStates = new HashMap<>();
 

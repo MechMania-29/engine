@@ -221,6 +221,77 @@ public class GameStateTest {
     }
 
     @Test
+    public void getPossibleMoveActionsTest() {
+
+        Player humanPlayer = new ComputerPlayer(false);
+        Player zombiePlayer = new ComputerPlayer(true);
+
+        List<List<Character>> map = List.of(
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+                "teeet".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList()
+        );
+
+        GameState game = new GameState(humanPlayer, zombiePlayer, map);
+        Position center = new Position(2,2);
+        Position left1 = new Position(center.getX() - 1, center.getY());
+        Position right1 = new Position(center.getX() + 1, center.getY());
+
+        // remove all characters
+        game.getCharacterStates().clear();
+
+        CharacterState human = new CharacterState("123", center, false, CharacterClassType.NORMAL);
+        CharacterState zombie = new CharacterState("456", center, true, CharacterClassType.ZOMBIE);
+
+        game.getCharacterStates().put(human.getId(), human);
+        game.getCharacterStates().put(zombie.getId(), zombie);
+
+        human.applyClassData(new CharacterClassData(1, 0, 1, 0, List.of()));
+        List<MoveAction> move0Expected = List.of(
+                new MoveAction(human.getId(), center)
+        );
+        List<MoveAction> move0 = game.getPossibleMoveActions(false).get(human.getId());
+        assertListContentsEqual(move0Expected, move0);
+
+        zombie.applyClassData(new CharacterClassData(1, 0, 1, 0, List.of()));
+        List<MoveAction> moveZombie0Expected = List.of(
+                new MoveAction(zombie.getId(), center)
+        );
+        List<MoveAction> moveZombie0 = game.getPossibleMoveActions(true).get(zombie.getId());
+        assertListContentsEqual(moveZombie0Expected, moveZombie0);
+
+        human.applyClassData(new CharacterClassData(1, 1, 1, 0, List.of()));
+        List<MoveAction> move1Expected = List.of(
+                new MoveAction(human.getId(), center),
+                new MoveAction(human.getId(), left1),
+                new MoveAction(human.getId(), right1)
+        );
+        List<MoveAction> move1 = game.getPossibleMoveActions(false).get(human.getId());
+        assertListContentsEqual(move1Expected, move1);
+
+        zombie.applyClassData(new CharacterClassData(1, 1, 1, 0, List.of()));
+        List<MoveAction> moveZombie1Expected = List.of(
+                new MoveAction(zombie.getId(), center),
+                new MoveAction(zombie.getId(), left1),
+                new MoveAction(zombie.getId(), right1)
+        );
+        List<MoveAction> moveZombie1 = game.getPossibleMoveActions(true).get(zombie.getId());
+        assertListContentsEqual(moveZombie1Expected, moveZombie1);
+
+        human.applyClassData(new CharacterClassData(1, 2, 1, 0, List.of()));
+        List<MoveAction> move2 = game.getPossibleMoveActions(false).get(human.getId());
+
+        assertListContentsEqual(move1Expected, move2);
+
+        zombie.applyClassData(new CharacterClassData(1, 2, 1, 0, List.of()));
+        List<MoveAction> moveZombie2 = game.getPossibleMoveActions(true).get(zombie.getId());
+
+        assertListContentsEqual(moveZombie1Expected, moveZombie2);
+    }
+
+    @Test
     public void getPossibleAttackActionsTest() {
 
         Player humanPlayer = new ComputerPlayer(false);
@@ -238,6 +309,10 @@ public class GameStateTest {
         Position center = new Position(2,2);
         Position up1 = new Position(center.getX(), center.getY() - 1);
         Position down1 = new Position(center.getX(), center.getY() + 1);
+        Position up1left1 = new Position(center.getX() - 1, center.getY() - 1);
+        Position up1right1 = new Position(center.getX() + 1, center.getY() - 1);
+        Position down1left1 = new Position(center.getX() - 1, center.getY() + 1);
+        Position down1right1 = new Position(center.getX() + 1, center.getY() + 1);
 
         // remove all characters
         game.getCharacterStates().clear();
@@ -270,5 +345,18 @@ public class GameStateTest {
         );
         List<AttackAction> attack1 = game.getPossibleAttackActions(false).get(human.getId());
         assertListContentsEqual(attack1Expected, attack1);
+
+        zombie.applyClassData(new CharacterClassData(1, 1, 1, 0, List.of()));
+        List<AttackAction> attackZombie1Expected = List.of(
+                new AttackAction(zombie.getId(), human.getId(), AttackActionType.CHARACTER),
+                new AttackAction(zombie.getId(), up1.toString(), AttackActionType.TERRAIN),
+                new AttackAction(zombie.getId(), down1.toString(), AttackActionType.TERRAIN),
+                new AttackAction(zombie.getId(), up1left1.toString(), AttackActionType.TERRAIN),
+                new AttackAction(zombie.getId(), up1right1.toString(), AttackActionType.TERRAIN),
+                new AttackAction(zombie.getId(), down1left1.toString(), AttackActionType.TERRAIN),
+                new AttackAction(zombie.getId(), down1right1.toString(), AttackActionType.TERRAIN)
+        );
+        List<AttackAction> attackZombie1 = game.getPossibleAttackActions(true).get(zombie.getId());
+        assertListContentsEqual(attackZombie1Expected, attackZombie1);
     }
 }
