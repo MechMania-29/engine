@@ -1,10 +1,22 @@
-# engine
+<div align="center">
 
-The MechMania engine runs the game by taking inputs from two clients (also called bots),
-and outputs a gamelog (a large json specifying what happened each turn).
-You can feed this gamelog to the visualizer to visualize what happened.
+<a href="https://mechmania.org"><img width="25%" src="https://github.com/MechMania-29/Website/blob/main/images/mm29_logo.png" alt="MechMania 29"></a>
+
+### [website](https://mechmania.org) | [python-starterpack](https://github.com/MechMania-29/python-starterpack) | [java-starterpack](https://github.com/MechMania-29/java-starterpack) | [visualizer](https://github.com/MechMania-29/visualizer) | engine
+
+# MechMania Engine
+
+The MechMania engine runs the game by taking inputs from two bots (created using one of the starterpacks),
+and outputs a gamelog (a large json file specifying what happened each turn).
+You can feed this gamelog to the [visualizer](https://github.com/MechMania-29/visualizer) to visualize what happened.
+
+</div>
+
+---
 
 ## Installation
+
+> Note: the starterpacks' include a script which will automatically download that latest engine, which is the easiest way to install the engine.
 
 First, make sure you have Java 17+ installed. If you have issues later, downgrading to Java 17 might fix it.
 
