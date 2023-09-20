@@ -74,8 +74,10 @@ public class GameStateTest {
         Position center = new Position(BOARD_SIZE / 2, BOARD_SIZE / 2);
         Map<String, Position> range0Expected = Map.of(center.toString(), center);
         Map<String, Position> range0 = empty.getTilesInRange(center, 0, false, false, false);
+        Map<String, Position> range0Attack = empty.getTilesInRange(center, 0, false, true, false);
 
         assertMapsEqual(range0Expected, range0);
+        assertMapsEqual(range0Expected, range0Attack);
 
         Map<String, Position> range1Expected = Stream.of(
                 center,
@@ -85,8 +87,10 @@ public class GameStateTest {
                 new Position(center.getX(), center.getY() - 1)
         ).collect(Collectors.toMap(Position::toString, pos -> pos));
         Map<String, Position> range1 = empty.getTilesInRange(center, 1, false, false, false);
+        Map<String, Position> range1Attack = empty.getTilesInRange(center, 1, false, true, false);
 
         assertMapsEqual(range1Expected, range1);
+        assertMapsEqual(range1Expected, range1Attack);
 
         Map<String, Position> range2Expected = Stream.of(
                 center,
@@ -104,8 +108,10 @@ public class GameStateTest {
                 new Position(center.getX(), center.getY() - 2)
         ).collect(Collectors.toMap(Position::toString, pos -> pos));
         Map<String, Position> range2 = empty.getTilesInRange(center, 2, false, false, false);
+        Map<String, Position> range2Attack = empty.getTilesInRange(center, 2, false, true, false);
 
         assertMapsEqual(range2Expected, range2);
+        assertMapsEqual(range2Expected, range2Attack);
     }
 
     @Test

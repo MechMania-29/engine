@@ -517,11 +517,16 @@ public class GameState {
         // Check blocking
         TerrainState blocking = getBlockingTerrain(pos, ignoreBarricades && isAttack);
 
-        if (isAttack && blocking.canAttackThrough()) {
-            return true;
+        if (blocking != null) {
+            // Blocking can be overridden if attacking and it's something we can attack through
+            if (isAttack && blocking.canAttackThrough()) {
+                return true;
+            }
+
+            return false;
         }
 
-        return blocking == null;
+        return true;
     }
 
     protected Map<String, Position> getTilesInRange(Position start, int range, boolean diagonal, boolean isAttack, boolean ignoreBarricades) {
