@@ -40,39 +40,11 @@ public class GameState {
         terrainStates = new HashMap<>();
         humanPlayer = human;
         zombiePlayer = zombie;
-        Map<String, Map<String, JsonNode>> characterStateDiffs = new HashMap<>();
-
-        // Create characters
-        for (int i = 0; i < TOTAL_CHARACTERS; i++) {
-            String id = Integer.toString(i);
-            boolean isZombie = i < STARTING_ZOMBIES;
-            Position startingPosition;
-
-            if (isZombie) {
-                startingPosition = new Position(BOARD_SIZE / 2 + i, 0);
-            } else {
-                startingPosition = new Position(BOARD_SIZE / 2 + i, BOARD_SIZE - 1);
-            }
-
-            CharacterClassType classType = isZombie ? CharacterClassType.ZOMBIE : CharacterClassType.NORMAL;
-            CharacterState characterState = new CharacterState(id, startingPosition, isZombie, classType);
-            characterStates.put(id, characterState);
-        }
-
-        // Apply human classes
-        ChooseClassesInput chooseClassesInput = new ChooseClassesInput(HUMAN_CLASSES, NUM_CLASSES_TO_PICK, MAX_PER_SAME_CLASS, turn);
-        Map<CharacterClassType, Integer> chosenClasses = human.getChosenClassesInput(chooseClassesInput);
-        applyChosenClassesToHumans(chosenClasses, chooseClassesInput);
-
-        // Generate character diff
-        for (CharacterState characterState : characterStates.values()) {
-            String id = characterState.getId();
-            Map<String, JsonNode> diff = characterState.diff(null);
-            characterStateDiffs.put(id, diff);
-        }
 
         // Load terrain
         Map<String, Map<String, JsonNode>> terrainStateDiffs = new HashMap<>();
+        Position humanSpawn = new Position(BOARD_SIZE / 2, BOARD_SIZE / 2);
+        Position zombieSpawn = new Position(BOARD_SIZE / 2, 0);
 
         for (int y = 0; y < map.size(); y++) {
             List<Character> row = map.get(y);
@@ -83,6 +55,16 @@ public class GameState {
                 Character character = row.get(x);
 
                 if (character == 'e') {
+                    continue;
+                }
+
+                if (character == 'H') {
+                    humanSpawn = position;
+                    continue;
+                }
+
+                if (character == 'Z') {
+                    zombieSpawn = position;
                     continue;
                 }
 
@@ -103,6 +85,40 @@ public class GameState {
             }
         }
 
+        // Compute spawn positions
+        List<Position> humanSpawnPositions = getSpawnPositions(humanSpawn, TOTAL_CHARACTERS - STARTING_ZOMBIES);
+        List<Position> zombieSpawnPositions = getSpawnPositions(zombieSpawn, STARTING_ZOMBIES);
+
+        // Create characters
+        Map<String, Map<String, JsonNode>> characterStateDiffs = new HashMap<>();
+        for (int i = 0; i < TOTAL_CHARACTERS; i++) {
+            String id = Integer.toString(i);
+            boolean isZombie = i < STARTING_ZOMBIES;
+            Position startingPosition;
+
+            if (isZombie) {
+                startingPosition = zombieSpawnPositions.get(i);
+            } else {
+                startingPosition = humanSpawnPositions.get(i - STARTING_ZOMBIES);
+            }
+
+            CharacterClassType classType = isZombie ? CharacterClassType.ZOMBIE : CharacterClassType.NORMAL;
+            CharacterState characterState = new CharacterState(id, startingPosition, isZombie, classType);
+            characterStates.put(id, characterState);
+        }
+
+        // Apply human classes
+        ChooseClassesInput chooseClassesInput = new ChooseClassesInput(HUMAN_CLASSES, NUM_CLASSES_TO_PICK, MAX_PER_SAME_CLASS, turn);
+        Map<CharacterClassType, Integer> chosenClasses = human.getChosenClassesInput(chooseClassesInput);
+        applyChosenClassesToHumans(chosenClasses, chooseClassesInput);
+
+        // Generate character diff
+        for (CharacterState characterState : characterStates.values()) {
+            String id = characterState.getId();
+            Map<String, JsonNode> diff = characterState.diff(null);
+            characterStateDiffs.put(id, diff);
+        }
+
         log.storeDiffs(characterStateDiffs, terrainStateDiffs);
     };
 
@@ -119,6 +135,24 @@ public class GameState {
 
     public int getTurn() {
         return turn;
+    }
+
+    private List<Position> getSpawnPositions(Position start, int countNeeded) {
+        List<Position> spawns = new ArrayList<>();
+        Set<String> existingSpawns = new HashSet<>();
+
+        int range = 0;
+        while (spawns.size() < countNeeded) {
+            getTilesInRange(start, range, false, false, false).values().forEach(pos -> {
+                if (!existingSpawns.contains(pos.toString())) {
+                    existingSpawns.add(pos.toString());
+                    spawns.add(pos);
+                }
+            });
+            range += 1;
+        }
+
+        return spawns;
     }
 
     public void runTurn() {

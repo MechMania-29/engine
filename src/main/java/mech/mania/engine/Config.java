@@ -103,7 +103,8 @@ public class Config implements Serializable {
     public static final Map<Character, TerrainType> MAP_CHAR_TO_TERRAIN_TYPE = Map.of(
             'w', TerrainType.WALL,
             't', TerrainType.TREE,
-            'r', TerrainType.RIVER
+            'r', TerrainType.RIVER,
+            'b', TerrainType.BARRICADE
     );
 
     // Networking
