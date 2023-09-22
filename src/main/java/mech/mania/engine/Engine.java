@@ -15,6 +15,8 @@ import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class Engine {
     private static final String USAGE = """
@@ -57,7 +59,7 @@ public class Engine {
             printWriter.close();
         }
     }
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
         if (args.length != 2) {
             System.err.println("No arguments specified");
             System.out.println(USAGE);
@@ -82,8 +84,16 @@ public class Engine {
 
         System.out.println("Connecting clients...");
 
-        Player humanPlayer = port1 > 0 ? new ClientPlayer(false, port1) : new ComputerPlayer(false);
-        Player zombiePlayer = port2 > 0 ? new ClientPlayer(true, port2) : new ComputerPlayer(true);
+        CompletableFuture<Player> humanPlayerFuture = CompletableFuture.supplyAsync(
+                () -> port1 > 0 ? new ClientPlayer(false, port1) : new ComputerPlayer(false)
+        );
+
+        CompletableFuture<Player> zombiePlayerFuture = CompletableFuture.supplyAsync(
+                () -> port2 > 0 ? new ClientPlayer(true, port2) : new ComputerPlayer(true)
+        );
+
+        Player humanPlayer = humanPlayerFuture.get();
+        Player zombiePlayer = zombiePlayerFuture.get();
 
         GameState gameState = new GameState(humanPlayer, zombiePlayer, map);
 
