@@ -18,8 +18,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import static mech.mania.engine.Config.MAX_ALLOWED_FAILS_IN_A_ROW;
+
 public class ClientPlayer extends Player {
     private final Client client;
+    private int fails = 0;
+    private boolean excommunicated = false;
 
     public ClientPlayer(boolean isZombie, int port) {
         super(isZombie);
@@ -32,8 +36,34 @@ public class ClientPlayer extends Player {
                 isZombie ? "zombie" : "human", turn, phase, e));
     }
 
+    private void didFail(GamePhase phase, int turn) {
+        fails += 1;
+
+        if (fails >= MAX_ALLOWED_FAILS_IN_A_ROW) {
+            if (excommunicated) { return; }
+
+            excommunicated = true;
+
+            handleClientError(
+                    phase, turn,
+                    new RuntimeException(
+                            String.format("""
+                                            Failed to respond properly %s times in a row, ignoring input from now on.
+
+                                            THIS MEANS YOUR BOT IS MOST LIKELY NOT RUNNING OR YOU ARE NOT RETURNING PROPERLY!""",
+                                    MAX_ALLOWED_FAILS_IN_A_ROW)
+                    )
+            );
+        }
+    }
+
+    private void didNotFail() {
+        fails = 0;
+    }
+
     @Override
     public Map<CharacterClassType, Integer> getChosenClassesInput(ChooseClassesInput chooseClassesInput) {
+        if (excommunicated) { return Map.of(); }
         logStartAction();
         ObjectMapper mapper = new ObjectMapper();
 
@@ -50,6 +80,7 @@ public class ClientPlayer extends Player {
             }
 
             logEndAction();
+            didNotFail();
 
             return chosenClasses;
         } catch (Exception e) {
@@ -57,12 +88,14 @@ public class ClientPlayer extends Player {
         }
 
         logEndAction();
+        didFail(GamePhase.CHOOSE_CLASSES, chooseClassesInput.turn());
 
         return Map.of();
     }
 
     @Override
     public List<MoveAction> getMoveInput(MoveInput moveInput) {
+        if (excommunicated) { return List.of(); }
         logStartAction();
         ObjectMapper mapper = new ObjectMapper();
 
@@ -79,6 +112,7 @@ public class ClientPlayer extends Player {
             }
 
             logEndAction();
+            didNotFail();
 
             return moveActions;
         } catch (Exception e) {
@@ -86,12 +120,14 @@ public class ClientPlayer extends Player {
         }
 
         logEndAction();
+        didFail(GamePhase.MOVE, moveInput.turn());
 
         return List.of();
     }
 
     @Override
     public List<AttackAction> getAttackInput(AttackInput attackInput) {
+        if (excommunicated) { return List.of(); }
         logStartAction();
         ObjectMapper mapper = new ObjectMapper();
 
@@ -108,6 +144,7 @@ public class ClientPlayer extends Player {
             }
 
             logEndAction();
+            didNotFail();
 
             return attackActions;
         } catch (Exception e) {
@@ -115,12 +152,14 @@ public class ClientPlayer extends Player {
         }
 
         logEndAction();
+        didFail(GamePhase.ATTACK, attackInput.turn());
 
         return List.of();
     }
 
     @Override
     public List<AbilityAction> getAbilityInput(AbilityInput abilityInput) {
+        if (excommunicated) { return List.of(); }
         logStartAction();
         ObjectMapper mapper = new ObjectMapper();
 
@@ -137,6 +176,7 @@ public class ClientPlayer extends Player {
             }
 
             logEndAction();
+            didNotFail();
 
             return actions;
         } catch (Exception e) {
@@ -144,6 +184,7 @@ public class ClientPlayer extends Player {
         }
 
         logEndAction();
+        didFail(GamePhase.ABILITY, abilityInput.turn());
 
         return List.of();
     }
@@ -155,7 +196,7 @@ public class ClientPlayer extends Player {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
 
-            FinishInput finishInput = new FinishInput(scores, stats, errors, stats.turns());
+            FinishInput finishInput = new FinishInput(scores, stats, errors, stats.turns(), false);
             client.send(new SendMessage(isZombie, GamePhase.FINISH, objectMapper.valueToTree(finishInput)));
 
             client.close();

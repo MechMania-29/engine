@@ -110,4 +110,5 @@ public class Config implements Serializable {
     // Networking
     public static final int TIMEOUT_MILIS_INIT = 15 * 1000; // The timeout for initial connection
     public static final int TIMEOUT_MILIS_TURN = 2500; // The timout for each turn response
+    public static final int MAX_ALLOWED_FAILS_IN_A_ROW = 5; // The number of times a bot can fail in a row before we dc them
 }
