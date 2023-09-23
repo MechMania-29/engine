@@ -552,7 +552,7 @@ public class GameState {
         }
 
         // Check blocking
-        TerrainState blocking = getBlockingTerrain(pos, ignoreBarricades && isAttack);
+        TerrainState blocking = getBlockingTerrain(pos, ignoreBarricades && !isAttack);
 
         if (blocking != null) {
             // Blocking can be overridden if attacking and it's something we can attack through

@@ -1,5 +1,6 @@
 package mech.mania.engine;
 
+import mech.mania.engine.character.CharacterClassAbility;
 import mech.mania.engine.character.CharacterClassData;
 import mech.mania.engine.character.CharacterClassType;
 import mech.mania.engine.character.CharacterState;
@@ -17,11 +18,12 @@ import static mech.mania.engine.TestingUtils.assertListContentsEqual;
 
 public class GetPossibleMoveActionsTest {
     private final Position center = new Position(2,2);
+    private final Position up1 = new Position(center.getX(), center.getY() - 1);
     private final Position left1 = new Position(center.getX() - 1, center.getY());
     private final Position right1 = new Position(center.getX() + 1, center.getY());
     private final List<List<Character>> map = List.of(
             "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
-            "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+            "ttbtt".chars().mapToObj(ch -> (char) ch).toList(),
             "teeet".chars().mapToObj(ch -> (char) ch).toList(),
             "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
             "ttttt".chars().mapToObj(ch -> (char) ch).toList()
@@ -80,6 +82,26 @@ public class GetPossibleMoveActionsTest {
         human.applyClassData(new CharacterClassData(1, 2, 1, 0, List.of()));
         List<MoveAction> move2 = game.getPossibleMoveActions(false).get(human.getId());
         human.applyClassData(new CharacterClassData(1, 3, 1, 0, List.of()));
+        List<MoveAction> move3 = game.getPossibleMoveActions(false).get(human.getId());
+
+        assertListContentsEqual(moveExpected, move1);
+        assertListContentsEqual(moveExpected, move2);
+        assertListContentsEqual(moveExpected, move3);
+    }
+
+    @Test
+    public void range1PlusHumanMovesOverBarricades() {
+        List<MoveAction> moveExpected = List.of(
+                new MoveAction(human.getId(), center),
+                new MoveAction(human.getId(), up1),
+                new MoveAction(human.getId(), left1),
+                new MoveAction(human.getId(), right1)
+        );
+        human.applyClassData(new CharacterClassData(1, 1, 1, 0, List.of(CharacterClassAbility.MOVE_OVER_BARRICADES)));
+        List<MoveAction> move1 = game.getPossibleMoveActions(false).get(human.getId());
+        human.applyClassData(new CharacterClassData(1, 2, 1, 0, List.of(CharacterClassAbility.MOVE_OVER_BARRICADES)));
+        List<MoveAction> move2 = game.getPossibleMoveActions(false).get(human.getId());
+        human.applyClassData(new CharacterClassData(1, 3, 1, 0, List.of(CharacterClassAbility.MOVE_OVER_BARRICADES)));
         List<MoveAction> move3 = game.getPossibleMoveActions(false).get(human.getId());
 
         assertListContentsEqual(moveExpected, move1);

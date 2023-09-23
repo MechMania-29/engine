@@ -127,4 +127,33 @@ public class GetTilesInRangeTest {
         assertMapsEqual(rangeAttackExpected, rangeAttack1);
         assertMapsEqual(rangeAttackExpected, rangeAttack5);
     }
+
+    @Test
+    public void getTilesInRangeTerrainBarricadesTest() {
+        Player human = new ComputerPlayer(false);
+        Player zombie = new ComputerPlayer(true);
+
+        List<List<Character>> map = List.of(
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttbtt".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttett".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList(),
+                "ttttt".chars().mapToObj(ch -> (char) ch).toList()
+        );
+
+        GameState game = new GameState(human, zombie, map);
+
+        Position middle = new Position(2, 2);
+        Position up1 = new Position(middle.getX(), middle.getY() - 1);
+
+        Map<String, Position> rangeExpected = Map.of(
+                middle.toString(), middle,
+                up1.toString(), up1
+        );
+        Map<String, Position> range1 = game.getTilesInRange(middle, 1, false, false, true);
+        Map<String, Position> range5 = game.getTilesInRange(middle, 5, false, false, true);
+
+        assertMapsEqual(rangeExpected, range1);
+        assertMapsEqual(rangeExpected, range5);
+    }
 }
