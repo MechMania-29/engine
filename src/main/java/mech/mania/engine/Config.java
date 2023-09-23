@@ -25,12 +25,12 @@ public class Config implements Serializable {
     public static final int STARTING_ZOMBIES = 5;
 
     // Classes
-    public static final int MAX_PER_SAME_CLASS = 10;
+    public static final int MAX_PER_SAME_CLASS = 5;
     public static final int NUM_CLASSES_TO_PICK = 16;
 
     public static final Map<CharacterClassType, CharacterClassData> CLASSES = Map.of(
             CharacterClassType.NORMAL, new CharacterClassData(
-                    1, 3, 4, 3,
+                    1, 3, 4, 8/2,
                     List.of()
             ),
             CharacterClassType.ZOMBIE, new CharacterClassData(
@@ -38,23 +38,23 @@ public class Config implements Serializable {
                     List.of()
             ),
             CharacterClassType.MARKSMAN, new CharacterClassData(
-                    1, 3, 6, 3,
+                    1, 3, 6, 6/2,
                     List.of()
             ),
             CharacterClassType.TRACEUR, new CharacterClassData(
-                    1, 4, 2, 2,
+                    1, 4, 2, 4/2,
                     List.of(CharacterClassAbility.MOVE_OVER_BARRICADES)
             ),
             CharacterClassType.MEDIC, new CharacterClassData(
-                    2, 3, 3, 3,
+                    2, 3, 3, 6/2,
                     List.of(CharacterClassAbility.HEAL)
             ),
             CharacterClassType.BUILDER, new CharacterClassData(
-                    1, 3, 4, 3,
+                    1, 3, 4, 6/2,
                     List.of(CharacterClassAbility.BUILD_BARRICADE)
             ),
             CharacterClassType.DEMOLITIONIST, new CharacterClassData(
-                    1, 3, 2, 3,
+                    1, 3, 2, 6/2,
                     List.of(CharacterClassAbility.ONESHOT_TERRAIN)
             )
     );
