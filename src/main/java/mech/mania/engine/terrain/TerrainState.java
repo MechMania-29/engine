@@ -14,7 +14,7 @@ import static mech.mania.engine.Config.DIFF_MODE_ENABLED;
 
 public class TerrainState implements Cloneable, Diffable {
     private final String id;
-    @JsonIgnore
+    @JsonProperty("type")
     private final TerrainType type;
     private final String imageId;
     private final Position position;
